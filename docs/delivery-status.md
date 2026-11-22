@@ -29,7 +29,7 @@
 | Blind-set infrastructure | Implemented, 12 cases | key-free bundle test passed |
 | Independent blind Agent score | **Not completed** | no independent Agent/human evaluator available in this implementation run |
 | Linux Python 3.11 regression | Passed | 30 tests + quality/compile/diff gates |
-| CI matrix | Previous baseline passed; hardening pending push | GitHub Actions `44967276616`: Ubuntu 22.04/Windows × Python 3.8/3.12, 4/4 jobs on the prior 25-test revision |
+| CI matrix | Passed remotely | GitHub Actions `44969009623` (push) and `44969014134` (PR): Ubuntu 22.04/Windows × Python 3.8/3.12, 4/4 jobs each on the 30-test hardening revision |
 
 ## Files added or changed
 

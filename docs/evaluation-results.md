@@ -22,7 +22,7 @@ This report separates executed checks from design claims. It does not claim that
 | `git diff --check` | PASS at the recorded run | No whitespace errors at that point. Re-run at delivery. |
 | wheel build + isolated no-index install | PASS | `oisolver-0.1.0-py3-none-any.whl`; CLI, record validation, and packaged extension data worked outside the checkout. |
 | `g++ -std=c++17 -O2 -Wall -Wextra -pedantic` on both style fixtures, then input `2 / 1 1` | PASS | Original printed `2`, one-token reference patch printed strict-LIS answer `1`; byte transform comparison passed. |
-| Prior pushed GitHub Actions run `44967276616` | 4/4 PASS | Ubuntu 22.04 and Windows, Python 3.8 and 3.12; this baseline ran the earlier 25-test revision. The current 30-test hardening revision still needs remote CI after push. |
+| GitHub Actions runs `44969009623` (push) and `44969014134` (PR) | 4/4 PASS each | The 30-test hardening revision passed install, quality, unit, and compileall gates on Ubuntu 22.04/Windows × Python 3.8/3.12. |
 | Real CPscore `check.py` | 17/17 PASS | Upstream Catalog's own offline contract passed. |
 | Real CPscore bridge test | PASS | OISolver delegated a CDQ query, saw all six foreign IDs, and returned the checkout revision. |
 | OIBlogScore `tools/check_quality.py` | PASS | Research dependency's quality gate passed. |
