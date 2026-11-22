@@ -45,6 +45,7 @@ PYTHONPATH=src python3 tools/check_quality.py \
 - tree：base seed `424242`，case seed `9021162741047655247`，67→5 bytes，9 次接受，最终合法且 mismatch 复现；
 - interactive：seed `20261121`，traffic `5 / ? 1 / 7 / ! 7`，1 query，状态 `PASS_WITHIN_TESTED_INTERACTION`；
 - Golden reference 18/18、blind reference 12/12，proof-chain support 均为 1.0。它们只验证 grader/reference conformance。
+- V2 commit `f65ecba` 的 push run `44973231965` 与 PR run `44973236080` 均为 4/4 PASS（Ubuntu 22.04/Windows × Python 3.8/3.12）。
 
 完整 compile、wheel/install、C++ fixture、whitespace 与本分支远端 CI 结果见 `docs/evaluation-results.md`；该文件只记录实际执行结果。
 

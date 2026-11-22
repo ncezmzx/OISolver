@@ -20,7 +20,7 @@ This report records commands that actually ran. It does not claim a real model p
 | `git diff --check` | PASS | No whitespace error in the delivered working diff. |
 | setuptools wheel + isolated `pip --no-index --no-deps` install | PASS | `oisolver-2.0.0-py3-none-any.whl` SHA-256 `e84e057fc45d0fc61dd8d119ddcc010dcb3ef862490ce11b01e981e4634c9b48`; packaged CLI/version/data/style smoke checks passed outside the checkout. |
 | C++ style fixtures with `g++ -std=c++17 -O2 -Wall -Wextra -pedantic` | PASS | Original emits 2 and the one-token strict-LIS fix emits 1 for `2 / 1 1`; style gate records token distance 1 and zero nonessential lines. |
-| GitHub Actions for final V2 commit | Pending until push | No final-branch CI pass is claimed in this snapshot. |
+| GitHub Actions for V2 implementation commit `f65ecba` | **4/4 PASS × 2** | Push run `44973231965` and PR run `44973236080` passed quality, 63-test suite, compileall, wheel, C++ fixture, and whitespace on Ubuntu 22.04/Windows × Python 3.8/3.12. |
 
 The full suite includes the prior 30 regression tests plus independent tests for domain shrinkers, guarded tree E2E, ASan/UBSan parsing and an actual UBSan run, 64 MiB hard limit, sandbox fail-closed, Candidate↔Interactor traffic/failure localization, proof-chain probes/gate, key-free bundles, fixed-model comparison, C++ metrics, and optional clang JSON AST parsing.
 
@@ -91,12 +91,11 @@ Synthetic tests created and verified deterministic baseline/Skill ZIPs. Their ar
 
 ## Historical external checks retained
 
-Before V2 edits, CPscore's own offline suite passed 17/17 and OIBlogScore passed 95/95 plus its quality gate. Prior OISolver V1 GitHub Actions runs `44969144033` and `44969146984` passed Ubuntu 22.04/Windows × Python 3.8/3.12. Those are dependency/history evidence, not final-V2 CI evidence.
+Before V2 edits, CPscore's own offline suite passed 17/17 and OIBlogScore passed 95/95 plus its quality gate. Prior OISolver V1 GitHub Actions runs `44969144033` and `44969146984` passed Ubuntu 22.04/Windows × Python 3.8/3.12; V2 runs are recorded in the project-gate table above.
 
 ## Not executed / not established
 
 - real fixed-model Baseline-vs-Skill Agent run and independent human mathematical adjudication;
-- final V2 GitHub Actions until the final commit is pushed;
 - macOS, successful bubblewrap path, broad C++ compiler/sanitizer matrix, online judge execution;
 - style preservation over a real anonymized user-patch corpus;
 - independent expert review of every Catalog overlay claim.
