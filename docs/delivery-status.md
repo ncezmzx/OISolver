@@ -28,7 +28,7 @@
 | Blind-set infrastructure | Implemented, 10 cases | key-free bundle test passed |
 | Independent blind Agent score | **Not completed** | no independent Agent/human evaluator available in this implementation run |
 | Linux Python 3.11 regression | Passed | 25 tests + quality/compile/diff gates |
-| Configured CI matrix | Designed/implemented, not yet remotely run | Ubuntu/Windows × Python 3.8/3.12 workflow |
+| CI matrix | Passed remotely | GitHub Actions `44967152735`: Ubuntu 22.04/Windows × Python 3.8/3.12, 4/4 jobs |
 
 ## Files added or changed
 
@@ -59,4 +59,4 @@ No CPscore or OIBlogScore repository was modified. No CPscore Catalog data was c
 - Add domain-aware shrink adapters (graphs, operation sequences, trees) that preserve invariants while deleting structure.
 - Add optional sandbox backends and compiler/Sanitizer manifests without making execution the default.
 - Independently review each solver extension claim before introducing an `independently-reviewed` status.
-- Exercise the configured CI matrix and publish results; add macOS only when an actual runner is available.
+- Add a macOS job only when an actual runner and support commitment are available; keep the passing Ubuntu/Windows matrix as a release gate.

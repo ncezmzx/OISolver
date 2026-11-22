@@ -21,6 +21,7 @@ This report separates executed checks from design claims. It does not claim that
 | `python3 -m compileall -q src tools tests` | PASS | Python sources compiled on Python 3.11. |
 | `git diff --check` | PASS at the recorded run | No whitespace errors at that point. Re-run at delivery. |
 | wheel build + isolated no-index install | PASS | `oisolver-0.1.0-py3-none-any.whl`; CLI, record validation, and packaged extension data worked outside the checkout. |
+| GitHub Actions run `44967152735` | 4/4 PASS | Ubuntu 22.04 and Windows, Python 3.8 and 3.12; install, quality gate, 25 tests, and compileall all passed. |
 | Real CPscore `check.py` | 17/17 PASS | Upstream Catalog's own offline contract passed. |
 | Real CPscore bridge test | PASS | OISolver delegated a CDQ query, saw all six foreign IDs, and returned the checkout revision. |
 | OIBlogScore `tools/check_quality.py` | PASS | Research dependency's quality gate passed. |
@@ -73,7 +74,7 @@ The generic shrinker did not find the global mathematical minimum `[0,0]`; token
 
 - Independent baseline-vs-Skill Agent evaluation: NOT RUN.
 - Human blind review of proof and explanation quality: NOT RUN.
-- Python 3.8/3.12 and Windows/macOS runtime execution: NOT RUN locally; CI is configured but has no result until pushed.
+- macOS runtime execution: NOT RUN. Python 3.8/3.12 on Ubuntu 22.04 and Windows passed remotely in GitHub Actions.
 - C++ compiler matrix, Sanitizers, hard memory sandbox, interactive problems: NOT RUN.
 - All CPscore human mappings or OISolver proof statements being independently expert-reviewed: NOT ESTABLISHED.
 - Code-style preservation metric on a corpus of real user patches: NOT RUN; scope is tested structurally only.
