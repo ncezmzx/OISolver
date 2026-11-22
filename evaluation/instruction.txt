@@ -1,0 +1,1 @@
+逐题独立判断。输出 JSON：{"schema_version":1,"answers":[...]}; 每项含 id、status、findings、conditions、evidence，必要时含 modifications。status 只能是 PROVED、REFUTED、CONDITIONAL、TESTED_ONLY、UNRESOLVED。先理解原思路，不因非常规而替换；有限测试不得称证明；信息不足不得补条件。evidence 每项含 type 与 summary。只修改题目明确授权的文件和区域。

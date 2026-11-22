@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "answers": [
+    {"id":"B01","status":"REFUTED","findings":["equal-x-cross-half-counted"],"conditions":[],"evidence":[{"type":"counterexample","summary":"Points (0,0),(0,1) can split across halves and be counted although strict x fails."}]},
+    {"id":"B02","status":"REFUTED","findings":["nonassociative-prefix-suffix"],"conditions":[],"evidence":[{"type":"counterexample","summary":"Subtraction is not associative: (a-b)-c differs from a-(b-c), so combining independently folded prefix and suffix is not generally the original ordered fold."}]},
+    {"id":"B03","status":"REFUTED","findings":["persistent-node-factor-depth"],"conditions":[],"evidence":[{"type":"formal-disproof","summary":"Each retained point-update version path-copies up to D+1 nodes; sharing untouched subtrees gives O(qD), not O(q) when D varies."}]},
+    {"id":"B04","status":"PROVED","findings":["bellman-ford-route-valid"],"conditions":[],"evidence":[{"type":"formal-proof","summary":"Bellman-Ford handles negative edges without reachable negative cycles and O(VE) fits the stated limits; a standard-route replacement is unnecessary."}]},
+    {"id":"B05","status":"REFUTED","findings":["empty-range-recursion"],"conditions":[],"evidence":[{"type":"counterexample","summary":"n=0 calls solve(0,-1); l==r is false and recursion does not have a valid decreasing interval base."}]},
+    {"id":"B06","status":"REFUTED","findings":["predicate-not-monotone-over-time"],"conditions":[],"evidence":[{"type":"counterexample","summary":"Insert 7, delete 7, insert 7 yields true,false,true, so a false midpoint cannot discard the entire earlier half."}]},
+    {"id":"B07","status":"REFUTED","findings":["equal-x-cross-half-counted","pair-count-int-overflow"],"conditions":[],"evidence":[{"type":"formal-disproof","summary":"Equal x violates strictness across a split; C(200000,2)=19999900000 exceeds signed 32-bit."}]},
+    {"id":"B08","status":"REFUTED","findings":["negative-reverse-residual-edge"],"conditions":[],"evidence":[{"type":"counterexample","summary":"Sending flow on a positive-cost forward edge creates a residual reverse edge with the negated, hence negative, cost; unweighted Dijkstra premises fail."}]},
+    {"id":"B09","status":"TESTED_ONLY","findings":["finite-random-not-proof"],"conditions":[],"evidence":[{"type":"executed-test","summary":"The prompt records a real seed, budget, and small domain, which supports only no mismatch in that range."}]},
+    {"id":"B10","status":"REFUTED","findings":["assignment-add-order"],"conditions":[],"evidence":[{"type":"counterexample","summary":"Add then cover and cover then add require different composed tags; patch only pushdown() to preserve chronological composition."}],"modifications":[{"path":"seg.cpp","regions":1}]}
+  ]
+}

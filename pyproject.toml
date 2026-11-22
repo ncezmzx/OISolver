@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oisolver"
+version = "0.1.0"
+description = "Evidence-driven OI problem research, verification, debugging, and optimization"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+readme = "README.md"
+
+[project.scripts]
+oisolver = "oisolver.cli:main"
+
+[tool.setuptools.package-data]
+oisolver = ["data/*.json"]

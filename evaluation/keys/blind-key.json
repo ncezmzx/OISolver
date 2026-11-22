@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {"id":"B01","status":"REFUTED","defect":true,"required_findings":["equal-x-cross-half-counted"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"B02","status":"REFUTED","defect":true,"required_findings":["nonassociative-prefix-suffix"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"B03","status":"REFUTED","defect":true,"required_findings":["persistent-node-factor-depth"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"B04","status":"PROVED","defect":false,"required_findings":["bellman-ford-route-valid"],"forbidden_findings":["must-replace-with-dijkstra"],"optional_findings":[]},
+    {"id":"B05","status":"REFUTED","defect":true,"required_findings":["empty-range-recursion"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"B06","status":"REFUTED","defect":true,"required_findings":["predicate-not-monotone-over-time"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"B07","status":"REFUTED","defect":true,"required_findings":["equal-x-cross-half-counted","pair-count-int-overflow"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"B08","status":"REFUTED","defect":true,"required_findings":["negative-reverse-residual-edge"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"B09","status":"TESTED_ONLY","defect":false,"required_findings":["finite-random-not-proof"],"forbidden_findings":["universal-correctness-claim"],"optional_findings":[]},
+    {"id":"B10","status":"REFUTED","defect":true,"required_findings":["assignment-add-order"],"forbidden_findings":["rewrite-apply","rewrite-main"],"optional_findings":[],"scope":{"allowed_paths":["seg.cpp"],"max_modified_regions":1}}
+  ]
+}
