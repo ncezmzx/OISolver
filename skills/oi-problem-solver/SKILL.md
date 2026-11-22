@@ -12,7 +12,7 @@ description: 研究与解决 OI/ICPC 问题：形式化题意，重建并独立�
 1. **固定请求和权限**：判断用户要结论、提示、渐进 Debug、补丁、完整代码还是题解；记录允许修改的文件／函数。用户要求直给时不强制教学流程。
 2. **建立事实台账**：按[题意理解](references/problem-understanding.md)区分明确条件、原题可确认条件、推断、假设和未知，不为算法补条件。
 3. **重建对象**：用自己的语言写出用户实际算法的状态、操作、目标、关键性质、依赖和不变量。代码任务先映射变量与理论含义。
-4. **选择最小工作流**：按[动态路由](references/routing.md)只加载必要模块；不能因已有标准解或 Catalog 命中而跳过原思路核验。
+4. **选择最小工作流**：按[动态路由](references/routing.md)只加载必要模块；所有技术判断先执行[四层验证协议](references/verification-protocol.md)的适用层，不能因已有标准解或 Catalog 命中而跳过原思路核验。
 5. **双向挑战**：对关键结论同时尝试证明与证伪；检查最小规模、重复、平局、退化结构、极值和实现差异。可执行验证只补强证据，不替代全称证明。
 6. **给准确状态**：每个关键结论只标为 `PROVED`（已严格证明）、`REFUTED`（合法反例／反证）、`CONDITIONAL`（列全条件）、`TESTED_ONLY`（只在记录范围通过）或 `UNRESOLVED`（说明阻塞）。
 7. **按证据交付**：明确哪些命令实际运行、编译器／标准／参数、种子、次数、范围和产物；未运行就写未运行。发现前述推导错误时明确撤回并指出断点。
@@ -21,6 +21,7 @@ description: 研究与解决 OI/ICPC 问题：形式化题意，重建并独立�
 
 | 当前任务 | 必读 Reference |
 |---|---|
+| 任意算法／证明／代码结论 | [四层验证协议](references/verification-protocol.md) |
 | 题面、口述、图片转写、条件歧义 | [题意理解](references/problem-understanding.md) |
 | 用户思路、猜想、非标准算法 | [思路验证](references/idea-verification.md) |
 | 证明、复杂度、CDQ／数据结构成本 | [证明与复杂度](references/proof-complexity.md) |

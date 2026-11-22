@@ -10,6 +10,8 @@
     {"id":"B07","category":"code","prompt":"二维偏序代码既未处理严格 x 的相等组，又用 int 保存最多 n(n-1)/2 的答案，n 可到 200000。列出独立根因。"},
     {"id":"B08","category":"editorial","prompt":"官方题解说最小费用流的原始正向费用非负，所以增广后的残量网络也全为非负边，可直接每轮用未配势的 Dijkstra。原题允许反向残量边。"},
     {"id":"B09","category":"differential","prompt":"作者实际固定 seed=7 对拍 1000000 个 n<=12 的合法随机数据，未发现差异；没有全范围证明，n 的正式上界是 2e5。应给什么结论状态？"},
-    {"id":"B10","category":"scope","prompt":"用户只授权修改 seg.cpp 的 pushdown()。覆盖后加与加后覆盖的标记合成顺序反了；其余接口和算法不变。补丁不得触及 apply()、main 或全文件格式。"}
+    {"id":"B10","category":"scope","prompt":"用户只授权修改 seg.cpp 的 pushdown()。覆盖后加与加后覆盖的标记合成顺序反了；其余接口和算法不变。补丁不得触及 apply()、main 或全文件格式。"},
+    {"id":"B11","category":"differential","prompt":"区间加/覆盖/求和线段树通过官方样例。独立数组 oracle 与合法随机生成器实际以 base seed=1 运行：前两例一致，第 3 例（case seed=582057716445789124）第五个查询 candidate=-3、oracle=-6；保存输入中先有全区间 add，再有覆盖其子区间的 set，之后下探查询。判断证据、首个不变量和缩小要求。"},
+    {"id":"B12","category":"problem","prompt":"口述题只说选择最多个“互不重叠区间”，没说明闭区间还是半开区间。用户按右端点贪心，并在 next.left>=last.right 时接受。判断该规则。"}
   ]
 }

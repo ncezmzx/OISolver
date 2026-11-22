@@ -25,12 +25,12 @@
       "status_correct": 1
     },
     "differential": {
-      "cases": 1,
+      "cases": 2,
       "finding_recall": 1.0,
-      "findings_found": 1,
-      "required": 1,
+      "findings_found": 3,
+      "required": 3,
       "status_accuracy": 1.0,
-      "status_correct": 1
+      "status_correct": 2
     },
     "editorial": {
       "cases": 1,
@@ -56,6 +56,14 @@
       "status_accuracy": 1.0,
       "status_correct": 1
     },
+    "problem": {
+      "cases": 1,
+      "finding_recall": 1.0,
+      "findings_found": 1,
+      "required": 1,
+      "status_accuracy": 1.0,
+      "status_correct": 1
+    },
     "proof": {
       "cases": 1,
       "finding_recall": 1.0,
@@ -73,17 +81,17 @@
       "status_correct": 1
     }
   },
-  "cases": 10,
+  "cases": 12,
   "counts": {
     "correct_cases": 1,
     "correct_cases_called_refuted": 0,
-    "defects": 8,
-    "defects_called_refuted": 8,
-    "required_findings": 11,
-    "required_findings_found": 11,
+    "defects": 9,
+    "defects_called_refuted": 9,
+    "required_findings": 14,
+    "required_findings_found": 14,
     "scope_violations": 0,
     "scoped_cases": 1,
-    "status_correct": 10,
+    "status_correct": 12,
     "unsupported_conclusions": 0
   },
   "details": [
@@ -213,6 +221,32 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "B10",
+      "required_findings": 1,
+      "scope_violation": false,
+      "status_correct": true
+    },
+    {
+      "answer_status": "REFUTED",
+      "category": "differential",
+      "evidence_shape_supported": true,
+      "expected_status": "REFUTED",
+      "extra_findings": 0,
+      "findings_found": 2,
+      "forbidden_hits": 0,
+      "id": "B11",
+      "required_findings": 2,
+      "scope_violation": false,
+      "status_correct": true
+    },
+    {
+      "answer_status": "CONDITIONAL",
+      "category": "problem",
+      "evidence_shape_supported": true,
+      "expected_status": "CONDITIONAL",
+      "extra_findings": 0,
+      "findings_found": 1,
+      "forbidden_hits": 0,
+      "id": "B12",
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true

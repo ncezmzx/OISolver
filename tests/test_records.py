@@ -36,7 +36,23 @@ class EvidenceRecords(unittest.TestCase):
         record = self.record()
         claim = record["claims"][0]
         claim["evidence"] = [claim["evidence"][1]]
-        with self.assertRaisesRegex(RecordError, "counterexample or disproof"):
+        with self.assertRaisesRegex(RecordError, "counterexample, disproof"):
+            validate_record(record)
+
+    def test_precise_logical_gap_can_refute_a_reasoning_step(self):
+        record = self.record()
+        claim = record["claims"][0]
+        claim["statement"] = "The forward implication alone establishes an equivalence."
+        claim["claim_scope"] = "reasoning-step"
+        claim["evidence"] = [{"type": "logical-gap", "summary": "The reverse implication is absent, so this exact equivalence step does not follow."}]
+        self.assertTrue(validate_record(record)["valid"])
+
+    def test_logical_gap_cannot_refute_an_unscoped_final_claim(self):
+        record = self.record()
+        claim = record["claims"][0]
+        claim["statement"] = "The final theorem is false."
+        claim["evidence"] = [{"type": "logical-gap", "summary": "One proof direction is absent."}]
+        with self.assertRaisesRegex(RecordError, "claim_scope reasoning-step"):
             validate_record(record)
 
     def test_unexecuted_test_cannot_be_cited(self):

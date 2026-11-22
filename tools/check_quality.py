@@ -14,7 +14,7 @@ from oisolver.evaluation import grade
 
 
 REQUIRED_REFERENCES = {
-    "routing.md", "problem-understanding.md", "idea-verification.md",
+    "routing.md", "verification-protocol.md", "problem-understanding.md", "idea-verification.md",
     "proof-complexity.md", "code-review.md", "debugging.md",
     "differential-testing.md", "optimization.md", "explanation-editorial.md",
     "catalog-integration.md", "interoperability.md", "output-contract.md",

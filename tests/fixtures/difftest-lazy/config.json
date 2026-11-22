@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "generator": {"argv": ["python3", "generator.py"]},
+  "candidate": {"argv": ["python3", "candidate.py"]},
+  "oracle": {"argv": ["python3", "oracle.py"]},
+  "trials": 500,
+  "seed": 1,
+  "comparison": "tokens",
+  "timeout_seconds": 2,
+  "metadata": {"runtime": "Python fixture", "purpose": "randomized lazy-tag composition regression"},
+  "output_dir": "output",
+  "shrink": {
+    "validator": {"argv": ["python3", "validator.py"]},
+    "units": ["integers"],
+    "max_attempts": 50
+  }
+}

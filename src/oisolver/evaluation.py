@@ -13,7 +13,7 @@ from typing import Any, Dict, Iterable, List, Optional, Set
 
 STATUSES = frozenset({"PROVED", "REFUTED", "CONDITIONAL", "TESTED_ONLY", "UNRESOLVED"})
 PROOF_TYPES = frozenset({"formal-proof", "invariant-proof", "counterexample",
-                         "formal-disproof", "exhaustive-full-domain"})
+                         "formal-disproof", "logical-gap", "exhaustive-full-domain"})
 
 
 class EvaluationError(ValueError):
@@ -148,6 +148,10 @@ def grade(cases_path: Path, key_path: Path, answers_path: Path) -> Dict[str, Any
                 for item in evidence):
             raise EvaluationError("{}.evidence must contain typed summaries".format(case_id))
         evidence_types = {item["type"] for item in evidence}
+        claim_scope = answer.get("claim_scope")
+        if claim_scope is not None and claim_scope not in (
+                "theorem", "algorithm", "reasoning-step", "implementation", "test-claim"):
+            raise EvaluationError("{}.claim_scope is invalid".format(case_id))
         conditions = answer.get("conditions", [])
         if not isinstance(conditions, list) or any(not isinstance(item, str) or not item.strip()
                                                   for item in conditions):
@@ -158,13 +162,15 @@ def grade(cases_path: Path, key_path: Path, answers_path: Path) -> Dict[str, Any
                 {"formal-proof", "invariant-proof", "exhaustive-full-domain"}):
             supported = False
         elif status == "REFUTED" and not evidence_types.intersection(
-                {"counterexample", "formal-disproof"}):
+                {"counterexample", "formal-disproof", "logical-gap"}):
             supported = False
         elif status == "TESTED_ONLY" and "executed-test" not in evidence_types:
             supported = False
         elif status == "CONDITIONAL" and not conditions:
             supported = False
         elif status == "UNRESOLVED" and "missing-context" not in evidence_types:
+            supported = False
+        if "logical-gap" in evidence_types and claim_scope != "reasoning-step":
             supported = False
         unsupported += not supported
 

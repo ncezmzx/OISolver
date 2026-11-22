@@ -8,6 +8,7 @@ OISolver does not optimize for the fastest plausible answer. It first fixes the 
 
 The installable Agent Skill is **`oi-problem-solver`** (`skills/oi-problem-solver/`). Its modular References cover:
 
+- mandatory theory, counterexample, program-verification, and implementation-review layers;
 - problem understanding and ambiguity;
 - independent idea verification;
 - proof and implementation-sensitive complexity;
@@ -29,7 +30,7 @@ Agent reasoning and deterministic tooling are intentionally separated:
 - the Python package delegates CPscore queries, validates evidence records, runs reproducible differential tests, guards counterexample shrinking with a legality validator, prepares blind bundles, and grades structured labels;
 - OIBlogScore receives neutral evidence only and independently reviews a fixed article version.
 
-See [architecture](docs/architecture.md), [dynamic workflows](docs/workflows.md), and the [pre-implementation research audit](docs/research-audit.md).
+See [architecture](docs/architecture.md), [implementation plan](docs/implementation-plan.md), [dynamic workflows](docs/workflows.md), and the [pre-implementation research audit](docs/research-audit.md).
 
 ## CPscore Catalog: inherited, not copied
 
@@ -87,11 +88,11 @@ oisolver validate-record record.json
 oisolver export-oiblog record.json --output evidence.json
 ```
 
-Validation rejects a `PROVED` claim backed only by testing, a `REFUTED` claim without a counterexample/disproof, citations to unexecuted tests, dependency cycles, and edits beyond authorized paths. Exported blog evidence has `verdict_transfer=false`; OIBlogScore must independently bind it to article text, assess coverage, and apply its own repair policy. See [OIBlogScore integration](docs/oiblogscore-integration.md).
+Validation rejects a `PROVED` claim backed only by testing, a `REFUTED` claim without a counterexample/disproof (or a `logical-gap` not scoped to one `reasoning-step`), citations to unexecuted tests, dependency cycles, and edits beyond authorized paths. Exported blog evidence has `verdict_transfer=false`; OIBlogScore must independently bind it to article text, assess coverage, and apply its own repair policy. See [OIBlogScore integration](docs/oiblogscore-integration.md).
 
 ## Evaluation
 
-The repository includes 18 Golden and 10 blind scenarios plus independent small-domain algorithm oracles. The cases cover hidden proof premises, minimum boundaries, sample-passing bugs, CDQ layer sums, correct nonstandard algorithms, correct ideas with wrong code, TLE, multiple independent defects, necessity versus sufficiency, differential testing, function-only changes, wrong editorials, insufficient information, persistence, lazy tags, and dynamic-tree space.
+The repository includes 18 Golden and 12 blind scenarios plus independent small-domain algorithm oracles. The cases cover hidden proof premises, underspecified endpoint semantics, minimum boundaries, sample-passing and random-only bugs, CDQ layer sums, correct nonstandard algorithms, correct ideas with wrong code, TLE, multiple independent defects, necessity versus sufficiency, differential testing, function-only changes, wrong editorials, insufficient information, persistence, lazy tags, and dynamic-tree space. A byte-exact C++ fixture also checks that the strict-LIS repair changes only `upper_bound` to `lower_bound`.
 
 ```sh
 PYTHONPATH=src python tools/check_quality.py

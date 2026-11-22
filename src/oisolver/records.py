@@ -17,7 +17,7 @@ PROOF_EVIDENCE = frozenset({
     "formal-proof", "induction", "invariant-proof", "exchange-proof",
     "bijection-proof", "exhaustive-full-domain"
 })
-REFUTATION_EVIDENCE = frozenset({"counterexample", "formal-disproof"})
+REFUTATION_EVIDENCE = frozenset({"counterexample", "formal-disproof", "logical-gap"})
 EVIDENCE_TYPES = PROOF_EVIDENCE | REFUTATION_EVIDENCE | frozenset({
     "executed-test", "execution-trace", "static-code-review", "catalog-source",
     "complexity-sum", "manual-derivation"
@@ -159,6 +159,10 @@ def validate_record(value: Any) -> Dict[str, Any]:
         status = claim.get("status")
         if status not in CLAIM_STATUSES:
             raise RecordError("{} has invalid status {}".format(claim_id, status))
+        claim_scope = claim.get("claim_scope")
+        if claim_scope is not None and claim_scope not in (
+                "theorem", "algorithm", "reasoning-step", "implementation", "test-claim"):
+            raise RecordError("{} has invalid claim_scope {}".format(claim_id, claim_scope))
         conditions = _strings(claim.get("conditions", []), "{}.conditions".format(claim_id))
         dependencies = _strings(claim.get("depends_on", []),
                                 "{}.depends_on".format(claim_id))
@@ -188,7 +192,9 @@ def validate_record(value: Any) -> Dict[str, Any]:
         if status == "PROVED" and not types.intersection(PROOF_EVIDENCE):
             raise RecordError("{} is PROVED without proof-grade evidence".format(claim_id))
         if status == "REFUTED" and not types.intersection(REFUTATION_EVIDENCE):
-            raise RecordError("{} is REFUTED without a counterexample or disproof".format(claim_id))
+            raise RecordError("{} is REFUTED without a counterexample, disproof, or precise logical gap".format(claim_id))
+        if "logical-gap" in types and claim_scope != "reasoning-step":
+            raise RecordError("{} uses logical-gap evidence without claim_scope reasoning-step".format(claim_id))
         if status == "CONDITIONAL" and not conditions:
             raise RecordError("{} is CONDITIONAL without explicit conditions".format(claim_id))
         if status == "TESTED_ONLY" and "executed-test" not in types:

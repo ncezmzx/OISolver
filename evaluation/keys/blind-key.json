@@ -10,6 +10,8 @@
     {"id":"B07","status":"REFUTED","defect":true,"required_findings":["equal-x-cross-half-counted","pair-count-int-overflow"],"forbidden_findings":[],"optional_findings":[]},
     {"id":"B08","status":"REFUTED","defect":true,"required_findings":["negative-reverse-residual-edge"],"forbidden_findings":[],"optional_findings":[]},
     {"id":"B09","status":"TESTED_ONLY","defect":false,"required_findings":["finite-random-not-proof"],"forbidden_findings":["universal-correctness-claim"],"optional_findings":[]},
-    {"id":"B10","status":"REFUTED","defect":true,"required_findings":["assignment-add-order"],"forbidden_findings":["rewrite-apply","rewrite-main"],"optional_findings":[],"scope":{"allowed_paths":["seg.cpp"],"max_modified_regions":1}}
+    {"id":"B10","status":"REFUTED","defect":true,"required_findings":["assignment-add-order"],"forbidden_findings":["rewrite-apply","rewrite-main"],"optional_findings":[],"scope":{"allowed_paths":["seg.cpp"],"max_modified_regions":1}},
+    {"id":"B11","status":"REFUTED","defect":true,"required_findings":["saved-random-counterexample","lazy-set-must-clear-add"],"forbidden_findings":["random-pass-is-proof"],"optional_findings":["shrink-requires-validator"]},
+    {"id":"B12","status":"CONDITIONAL","defect":false,"required_findings":["endpoint-overlap-definition-missing"],"forbidden_findings":["assume-half-open"],"optional_findings":[]}
   ]
 }
