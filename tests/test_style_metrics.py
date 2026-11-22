@@ -3,10 +3,12 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from oisolver.style import clang_ast_signature, evaluate_cpp_files, evaluate_cpp_patch
+from oisolver.style import (calibrate_cpp_style, clang_ast_signature,
+                            evaluate_cpp_files, evaluate_cpp_patch)
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "style"
+CALIBRATION = Path(__file__).parent / "fixtures" / "style-calibration" / "corpus.json"
 
 
 class CppStyleMetrics(unittest.TestCase):
@@ -42,6 +44,24 @@ class CppStyleMetrics(unittest.TestCase):
             result = clang_ast_signature(source, str(fake))
             self.assertTrue(result["available"])
             self.assertEqual(result["nodes"], ["TranslationUnitDecl", "FunctionDecl"])
+
+    def test_realistic_repair_corpus_calibrates_zero_false_positive_threshold(self):
+        result = calibrate_cpp_style(CALIBRATION)
+        self.assertEqual(result["samples"], 12)
+        self.assertEqual(result["status"], "PASS")
+        self.assertTrue(result["calibration_passed"])
+        self.assertEqual(result["selected_threshold"], 0.10)
+        selected = next(
+            item for item in result["threshold_sweep"]
+            if item["threshold"] == result["selected_threshold"]
+        )
+        self.assertEqual(selected["false_positive_count"], 0)
+        self.assertEqual(selected["false_negative_count"], 0)
+        stricter = next(item for item in result["threshold_sweep"]
+                        if item["threshold"] == 0.05)
+        self.assertGreater(stricter["false_positive_count"], 0)
+        self.assertFalse(result["missing_tags"])
+        self.assertTrue(result["required_warnings_present"])
 
     def test_destructive_rewrite_triggers_explicit_style_warnings(self):
         before = """#include<bits/stdc++.h>

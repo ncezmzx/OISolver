@@ -59,6 +59,30 @@ V2 可在 `shrink.domain` 选择显式 canonical codec：
 - `graph`：首行 `n m`，随后 m 条边；配置 directed、DAG、weak/strong connectivity、自环／重边和边权约束，尝试删边、删边并移除孤立点、孤立点重编号和缩权。
 - `operation-sequence`：首行 `n q`，可选初始数组，随后 q 个操作；自动修复 q，二分删段／单删，并缩区间端点、参数和初值。`preserve_prefix_operations` 与 `preserve_initial_array` 可逐字保留必要前置状态；其余前置操作也只有在 validator 通过且差异仍复现时才会被移除。
 
+### V3 声明式输入适配
+
+题目不是 canonical 格式时不要手写复制一套 shrinker。在 `shrink.adapter` 内联 schema，或用 `{"schema_file":"schema.json"}`：
+
+```json
+"shrink": {
+  "validator": {"argv": ["python3", "validator.py"]},
+  "adapter": {
+    "schema_version": 1,
+    "test_cases": {"mode": "counted", "allow_case_deletion": true},
+    "case": {
+      "kind": "tree",
+      "header_fields": ["n"], "size_field": "n", "index_base": 0,
+      "node_weights": false,
+      "edges": {"fields": ["w", "u", "v"],
+                "u_field": "u", "v_field": "v", "weight_field": "w"}
+    }
+  },
+  "max_attempts": 500
+}
+```
+
+适配器支持 single／counted `T`（先独立删整例，再缩每例）、0/1 下标、字段重排的带／不带权树和图、token／character 网格矩阵，以及混合元数操作（声明哪些操作具有 `op l r [x ...]` 区间前缀）。图的 directed/DAG/connectivity/重边/自环配置继续复用 V2 graph shrinker。schema 未知字段和错拼会 fail closed；适配器只负责解析、映射和回写，不替代题目 validator。`shrink.domain` 与 `shrink.adapter` 互斥。
+
 这些内置 shape 检查不是题目合法性证明；对应题目的外部 validator 仍是强制门禁。例如：
 
 ```json

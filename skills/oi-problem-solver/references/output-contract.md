@@ -26,6 +26,10 @@
 
 实验比较至少报告 hidden-bug recall、正确非常规思路 false-positive rate、progressive-debug compliance、counterexample size、C++ style preservation。缺失真实 patch-quality 证据时 style 指标为 null，不用主观分数补齐。盲包必须是 key/reference/tests 均不在 archive 中的可验证 ZIP；真正保密还需无法挂载控制仓库的独立 OS／容器工作区。
 
+## 工程交付分栏
+
+版本／基础设施交付必须严格分开写：**已设计**（契约和边界）、**已实现**（真实文件／接口）、**实际测试（命令与环境）**（只列已运行结果）、**未执行**（包括工具存在但环境不具备的路径）、**已知限制**。例如本机无 clang 时，compiler capability 的 unavailable/degraded 属于实际测试，而 clang 成功编译/AST 属于未执行；无 model runner 时 blind effectiveness 必须为 `UNRESOLVED`，不能把 reference conformance 放进“模型测试”。
+
 ## 修改说明
 
 每次代码改动列：文件／函数、修改点、原因、是否改变算法、时间／空间变化、码风保持情况、实际验证。用户要求片段就不给无关完整重写；要求完整代码才输出完整代码。

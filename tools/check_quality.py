@@ -21,8 +21,8 @@ REQUIRED_REFERENCES = {
 }
 REQUIRED_RUNTIME = {
     "catalog.py", "records.py", "process.py", "differential.py",
-    "domain_shrinkers.py", "evaluation.py", "experiment.py", "style.py",
-    "interop.py", "cli.py",
+    "domain_shrinkers.py", "input_adapters.py", "workflow.py",
+    "evaluation.py", "experiment.py", "style.py", "interop.py", "cli.py",
 }
 
 
@@ -56,7 +56,7 @@ def check(catalog_path=None):
     runtime_dir = ROOT / "src/oisolver"
     missing_runtime = REQUIRED_RUNTIME - {path.name for path in runtime_dir.glob("*.py")}
     if missing_runtime:
-        errors.append("Missing V2 runtime modules: " + ", ".join(sorted(missing_runtime)))
+        errors.append("Missing runtime modules: " + ", ".join(sorted(missing_runtime)))
 
     for path in sorted(ROOT.rglob("*.md")):
         if any(part.startswith(".") for part in path.relative_to(ROOT).parts):

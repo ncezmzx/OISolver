@@ -1,6 +1,19 @@
-# Executed evaluation results · OISolver V2 · 2026-11-21
+# Executed evaluation results · OISolver V3 · 2026-11-21
 
 This report records commands that actually ran. It does not claim a real model passed the blind set or that finite execution proves arbitrary programs correct.
+
+## V3 incremental results
+
+V3 preserves the V2 evidence below and adds declarative input adaptation, style calibration, compiler capability probes, and a progressive repair workflow. In the same Linux/Python environment:
+
+- the expanded suite ran 78 tests in 11.527 s: 77 pass and the real-clang capability case is skipped because `clang++` is absent locally;
+- counted non-canonical tree E2E: base seed `314159`, case seed `2534161336896504054`, 3 cases / 62 bytes to 1 case / 10 bytes, 13 attempts, final validator PASS and mismatch reproduced;
+- style calibration: 12 samples (9 acceptable, 3 reject); threshold 0.10 has 0 false positives and 0 false negatives, while 0.05 rejects one acceptable sample and 0.15 accepts one unacceptable sample;
+- compiler report: `DEGRADED` solely because `clang++` is absent; g++ 12.2.0 C++17, ASan+UBSan compile, clean runtime, and intentional signed-overflow detection/classification probes pass;
+- repair fixture: ordered eight-stage evidence accepted, original diagnostic discrepancy reproduced, guarded discovery/shrink succeeds, patched run matches the correct answer, all configured regression trials agree, patched sanitizer passes, and style score is 99.462. Its algorithm-wide claim remains `UNRESOLVED` absent a separate proof;
+- wheel/install smoke: `oisolver-3.0.0-py3-none-any.whl` installed with `--no-index --no-deps`, exposed adapter/workflow/CLI entry points, and had SHA-256 `b4ccbc4c2c2d8830d27a084ce5e5dd821250c0ed9f93f48ddd777bf39b8e32aa`.
+
+Exact commands, schemas, and bounded claims are in [V3 reproducible examples](v3-reproducible-examples.md). The live 12-case fixed-model experiment was not run because no model entry point exists; its null metrics and infrastructure attribution are recorded in `evaluation/results/2026-11-21/v3-live-model-experiment-status.json`.
 
 ## Environment
 
@@ -10,7 +23,7 @@ This report records commands that actually ran. It does not claim a real model p
 - CPscore checkout `084c4ef855c6c9092ba40e23c047f8e2391dd144`, Catalog schema v1 / 635 entries
 - OIBlogScore research checkout `31b3ce62bdae00b91d5dd9a278c100de6575ada8`
 
-## V2 project gates
+## Historical V2 project gates
 
 | Command | Actual result | Finite claim |
 |---|---:|---|
@@ -100,4 +113,4 @@ Before V2 edits, CPscore's own offline suite passed 17/17 and OIBlogScore passed
 - style preservation over a real anonymized user-patch corpus;
 - independent expert review of every Catalog overlay claim.
 
-Overall bounded conclusion: **V2 engineering fixtures PASS in the stated Linux scope; real Agent capability improvement remains UNRESOLVED.**
+Overall bounded conclusion: **V3 applicable engineering fixtures PASS in the stated Linux scope; local Clang capability is DEGRADED/unavailable, and real Agent capability improvement remains UNRESOLVED.**

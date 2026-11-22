@@ -41,6 +41,8 @@
 
 指标对无必要改名、宏删除、全局数组→vector、快 I/O 删除、重排缩进／空行和大范围改写发出警告并扣分。它是可审计的保守启发式，不判断语义等价；低编辑距离不能替代正确性，高距离也可在已授权重构中合法。CLI gate 默认要求 nonessential line rate 不超过阈值，授权替换必须显式列出。
 
+V3 的 `oisolver style-calibrate --corpus tests/fixtures/style-calibration/corpus.json` 在 12 个标注修复上扫描阈值。样本覆盖紧凑／展开格式、`#define int long long`、全局数组／vector、iostream/scanf/getchar 快读和位运算写法；0.10 是该 corpus 上最严格的零误拒／零漏拒值。新阈值必须提供逐样本 warning、false-positive/false-negative 表，不能为了让当前补丁通过而临时放宽。可选 clang AST 只有真实 probe 成功才记 available；clang 缺失记 degraded，不把轻量 token tree 冒充 compiler AST。
+
 ## 验证
 
 先锁定原行为和反例／基准，再应用最小 diff；运行正确性回归和必要性能测量。实测只报告环境和输入，不能用一台机器的毫秒数替代理论界。交付说明是否改变算法与复杂度。

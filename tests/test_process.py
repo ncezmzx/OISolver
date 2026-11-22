@@ -10,7 +10,9 @@ from oisolver.process import (
     ResourceLimits,
     SandboxPolicy,
     analyze_sanitizer,
+    compiler_capabilities,
     diagnose_cpp,
+    probe_cpp_compiler,
     run_command,
     run_interactive,
     run_interactive_config,
@@ -38,6 +40,35 @@ class ProcessBackends(unittest.TestCase):
         self.assertIn("-fno-omit-frame-pointer", argv)
         self.assertNotIn("-static", argv)
 
+    def test_missing_compiler_capability_and_diagnosis_fail_closed(self):
+        missing = "oisolver-compiler-that-does-not-exist"
+        probe = probe_cpp_compiler(missing)
+        self.assertEqual(probe["status"], "UNAVAILABLE")
+        self.assertFalse(probe["available"])
+        self.assertTrue(probe["fail_closed"])
+        suite = compiler_capabilities((missing,))
+        self.assertEqual(suite["status"], "UNAVAILABLE")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "main.cpp"
+            source.write_text("int main(){}\n", encoding="utf-8")
+            report = diagnose_cpp(source, root, compiler=missing)
+        self.assertEqual(report["status"], "COMPILER_UNAVAILABLE")
+        self.assertTrue(report["fail_closed"])
+        self.assertTrue(report["degraded"])
+        self.assertNotIn("run", report)
+
+    @unittest.skipUnless(shutil.which("g++"), "g++ capability probe requires g++")
+    def test_gxx_capability_executes_asan_ubsan_probe(self):
+        probe = probe_cpp_compiler("g++")
+        self.assertEqual(probe["status"], "AVAILABLE")
+        self.assertTrue(probe["plain_compile"])
+        self.assertTrue(probe["sanitizer_compile"])
+        self.assertTrue(probe["sanitizer_runtime"])
+        self.assertTrue(probe["sanitizer_detection"])
+        self.assertTrue(probe["sanitizer_compatible"])
+        self.assertFalse(probe["clang_ast"]["available"])
+
     @unittest.skipUnless(os.name == "posix", "POSIX rlimits required")
     def test_memory_limit_is_enforced_and_classified(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -59,6 +90,14 @@ class ProcessBackends(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "bubblewrap"):
                 run_command([sys.executable, "-c", "print(1)"], Path(temporary),
                             sandbox=SandboxPolicy(backend="bubblewrap"))
+
+    @unittest.skipUnless(os.name == "posix" and shutil.which("clang++"),
+                         "optional POSIX clang++ capability requires clang++")
+    def test_clang_capability_compiles_sanitizers_and_json_ast(self):
+        probe = probe_cpp_compiler("clang++")
+        self.assertEqual(probe["status"], "AVAILABLE")
+        self.assertTrue(probe["sanitizer_compatible"])
+        self.assertTrue(probe["clang_ast"]["available"])
 
     @unittest.skipUnless(os.name == "posix" and shutil.which("g++"),
                          "g++ sanitizer integration requires POSIX")

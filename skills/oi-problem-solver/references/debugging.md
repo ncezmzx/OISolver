@@ -49,6 +49,16 @@
 
 没有合法性校验器时不自动宣称缩小结果合法，更不能称“最小”。“局部最小”需说明采用的删除／数值邻域；全局最小需要完整枚举依据。
 
+## V3 一键证据链
+
+当材料包含不完整题面、WA C++、可写独立 oracle/validator 且用户允许修复时，优先生成 `oisolver repair init` scaffold，再由 Agent 填入：四类事实台账、修改授权、诊断输入／正确输出、八阶段证据、最小 patched source、固定种子 difftest 配置和授权替换。填完后一次运行：
+
+```sh
+oisolver repair run --config repair.json
+```
+
+runtime 会强制阶段顺序 `model → diagnostic-input → correct-answer → trace → first-divergence → invariant-root-cause → minimal-fix → regression`，并执行 compiler/sanitizer probe、原程序诊断复现、validator+mismatch 守卫的发现与 shrink、相同 seed 的修复回归、patched sanitizer 和 style/minimal-patch gate。任何空证据、越权文件、无 sanitizer compiler、无合法 shrink 或回归差异都会 fail closed。该链减少命令胶水，但不会替 Agent 理解题意、证明 oracle、判断首个偏离或制作补丁；最终算法全范围正确性仍需单独证明，否则为 `UNRESOLVED`。
+
 ## 用户直给模式
 
 用户明确要求错误位置、补丁或完整代码时，直接给根因和修复，不用教学节奏拖延；仍保留反例、首个偏离和验证结论。

@@ -5,12 +5,13 @@ import sys
 import tempfile
 import unittest
 
-from oisolver.differential import run_config
+from oisolver.differential import DifferentialError, run_config
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "difftest"
 LAZY_FIXTURE = Path(__file__).parent / "fixtures" / "difftest-lazy"
 TREE_FIXTURE = Path(__file__).parent / "fixtures" / "difftest-tree"
+ADAPTER_TREE_FIXTURE = Path(__file__).parent / "fixtures" / "difftest-adapter-tree"
 
 
 class DifferentialTesting(unittest.TestCase):
@@ -98,6 +99,53 @@ class DifferentialTesting(unittest.TestCase):
         self.assertTrue(shrink["final_mismatch"])
         self.assertLess(shrink["minimized_bytes"], shrink["original_bytes"])
         self.assertTrue((artifact / "minimized-input.txt").is_file())
+
+    def test_adapter_schema_typo_fails_before_a_passing_run(self):
+        root, config_path = self.workspace(ADAPTER_TREE_FIXTURE)
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        config["candidate"] = dict(config["oracle"])
+        schema_path = root / "schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        schema["case"]["index_bsae"] = 0
+        schema_path.write_text(json.dumps(schema), encoding="utf-8")
+        config_path.write_text(json.dumps(config), encoding="utf-8")
+        with self.assertRaisesRegex(DifferentialError, "unknown fields"):
+            run_config(config_path)
+        self.assertFalse((root / "output").exists())
+
+    def test_counted_noncanonical_tree_adapter_shrinks_one_case_legally(self):
+        root, config_path = self.workspace(ADAPTER_TREE_FIXTURE)
+        code, report = run_config(config_path)
+        self.assertEqual(code, 1)
+        self.assertEqual(report["status"], "MISMATCH")
+        self.assertEqual(report["base_seed"], 314159)
+        failure = report["failure"]
+        shrink = failure["shrink"]
+        adapter = shrink["adapter"]
+        self.assertEqual(adapter["mode"], "counted")
+        self.assertEqual(adapter["kind"], "tree")
+        self.assertEqual(adapter["original_cases"], 3)
+        self.assertEqual(adapter["minimized_cases"], 1)
+        self.assertTrue(adapter["accepted_case_deletions"])
+        self.assertEqual(adapter["case_reports"][0]["original"],
+                         {"vertices": 5, "edges": 4})
+        self.assertEqual(adapter["case_reports"][0]["minimized"],
+                         {"vertices": 2, "edges": 1})
+        self.assertTrue(shrink["final_legal"])
+        self.assertTrue(shrink["final_mismatch"])
+        minimized = Path(failure["artifact_dir"]) / "minimized-input.txt"
+        self.assertEqual(minimized.read_text(encoding="utf-8"), "1\n2\n9 0 1\n")
+        trace = json.loads(Path(shrink["trace_file"]).read_text(
+            encoding="utf-8"
+        ))["attempts"]
+        self.assertTrue(any(
+            row["transform"].startswith("adapter:delete-cases")
+            and row["accepted"] for row in trace
+        ))
+        self.assertTrue(all(
+            row["validator_returncode"] == 0 and row["outcome"] == "mismatch"
+            for row in trace if row["accepted"]
+        ))
 
     def test_tree_domain_shrinker_preserves_legality_and_full_trace(self):
         root, config_path = self.workspace(TREE_FIXTURE)

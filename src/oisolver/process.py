@@ -15,6 +15,7 @@ import re
 import shutil
 import signal
 import subprocess
+import tempfile
 import threading
 import time
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -348,6 +349,202 @@ def sanitizer_compile_argv(source: Path, output: Path, compiler: str = "g++",
     return argv
 
 
+def _compiler_executable(compiler: str) -> Optional[str]:
+    if not isinstance(compiler, str) or not compiler or compiler == "auto":
+        return None
+    candidate = Path(compiler)
+    if candidate.is_file():
+        return str(candidate.resolve())
+    return shutil.which(compiler)
+
+
+def probe_cpp_compiler(compiler: str, standard: str = "c++17",
+                       timeout: float = 15.0) -> Dict[str, Any]:
+    """Compile and execute a known sanitizer probe; never infer support by name."""
+    if not isinstance(standard, str) or not standard or timeout <= 0:
+        raise ValueError("Compiler probe standard/timeout is invalid")
+    executable = _compiler_executable(compiler)
+    result: Dict[str, Any] = {
+        "requested": compiler,
+        "standard": standard,
+        "available": executable is not None,
+        "executable": executable,
+        "plain_compile": False,
+        "sanitizer_compile": False,
+        "sanitizer_runtime": False,
+        "sanitizer_detection": False,
+        "sanitizer_compatible": False,
+        "clang_ast": {"available": False, "reason": "not probed"},
+        "fail_closed": True,
+    }
+    if executable is None:
+        result.update({
+            "status": "UNAVAILABLE",
+            "reason": "{} was not found on PATH or as a file".format(compiler),
+            "clang_ast": {"available": False, "reason": "compiler unavailable"},
+        })
+        return result
+
+    with tempfile.TemporaryDirectory(prefix="oisolver-compiler-probe-") as temporary:
+        root = Path(temporary)
+        source = root / "probe.cpp"
+        binary = root / ("probe.exe" if os.name == "nt" else "probe")
+        source.write_text(
+            "#include <climits>\n"
+            "int main(int argc,char**){ volatile int x=INT_MAX; "
+            "if(argc>1){ int y=x+1; return y==0; } return 0; }\n",
+            encoding="utf-8",
+        )
+        try:
+            version = run_command([executable, "--version"], root, timeout=timeout,
+                                  max_output_bytes=1024 * 1024)
+            result["version"] = (version.stdout or version.stderr).decode(
+                "utf-8", errors="replace"
+            ).splitlines()[0][:500] if (version.stdout or version.stderr) else ""
+            plain = run_command(
+                [executable, "-std={}".format(standard), "-fsyntax-only", str(source)],
+                root, timeout=timeout, max_output_bytes=1024 * 1024,
+            )
+            result["plain_compile"] = (
+                not plain.timed_out and plain.returncode == 0
+            )
+            result["plain_compile_result"] = plain.as_dict(max_preview=1000)
+            sanitizer = run_command(
+                sanitizer_compile_argv(source, binary, executable, standard),
+                root, timeout=timeout, max_output_bytes=2 * 1024 * 1024,
+            )
+            result["sanitizer_compile"] = (
+                not sanitizer.timed_out and sanitizer.returncode == 0
+            )
+            result["sanitizer_compile_result"] = sanitizer.as_dict(max_preview=1000)
+            if result["sanitizer_compile"]:
+                execution = run_command(
+                    [str(binary)], root, timeout=timeout,
+                    environment={
+                        "ASAN_OPTIONS": "abort_on_error=1:detect_leaks=0",
+                        "UBSAN_OPTIONS": "halt_on_error=1",
+                    },
+                    max_output_bytes=2 * 1024 * 1024,
+                )
+                result["sanitizer_runtime"] = (
+                    not execution.timed_out and execution.returncode == 0
+                    and not analyze_sanitizer(execution.stderr)
+                )
+                result["sanitizer_runtime_result"] = execution.as_dict(
+                    max_preview=1000
+                )
+                detection = run_command(
+                    [str(binary), "trigger"], root, timeout=timeout,
+                    environment={
+                        "ASAN_OPTIONS": "abort_on_error=1:detect_leaks=0",
+                        "UBSAN_OPTIONS": "halt_on_error=1",
+                    },
+                    max_output_bytes=2 * 1024 * 1024,
+                )
+                detection_categories = {
+                    item["category"] for item in analyze_sanitizer(
+                        detection.stderr
+                    )
+                }
+                result["sanitizer_detection"] = (
+                    not detection.timed_out and detection.returncode != 0
+                    and "SIGNED_OVERFLOW" in detection_categories
+                )
+                result["sanitizer_detection_result"] = detection.as_dict(
+                    max_preview=1000
+                )
+
+            lowered = Path(executable).name.lower()
+            if "clang" in lowered and result["plain_compile"]:
+                ast = run_command(
+                    [executable, "-std={}".format(standard), "-fsyntax-only",
+                     "-Xclang", "-ast-dump=json", str(source)],
+                    root, timeout=timeout, max_output_bytes=8 * 1024 * 1024,
+                )
+                ast_reason = ast.stderr.decode("utf-8", errors="replace")[:1000]
+                ast_valid = False
+                if not ast.timed_out and ast.returncode == 0:
+                    try:
+                        tree = json.loads(ast.stdout.decode("utf-8"))
+                        ast_valid = isinstance(tree, dict) and isinstance(
+                            tree.get("kind"), str
+                        )
+                    except (UnicodeError, json.JSONDecodeError):
+                        ast_reason = "clang AST output was not valid JSON"
+                result["clang_ast"] = {
+                    "available": ast_valid,
+                    "reason": "" if ast_valid else (ast_reason or "AST probe failed"),
+                    "returncode": ast.returncode,
+                    "timed_out": ast.timed_out,
+                }
+            else:
+                result["clang_ast"] = {
+                    "available": False,
+                    "reason": "not a clang compiler",
+                }
+        except (OSError, ValueError) as exc:
+            result.update({"status": "BROKEN", "reason": str(exc)})
+            return result
+
+    result["sanitizer_compatible"] = bool(
+        result["sanitizer_compile"] and result["sanitizer_runtime"]
+        and result["sanitizer_detection"]
+    )
+    is_clang = "clang" in Path(executable).name.lower()
+    if (result["plain_compile"] and result["sanitizer_compatible"]
+            and (not is_clang or result["clang_ast"]["available"])):
+        result.update({"status": "AVAILABLE", "reason": ""})
+    elif result["plain_compile"] and result["sanitizer_compatible"]:
+        result.update({
+            "status": "DEGRADED",
+            "reason": "sanitizers work but the optional Clang JSON AST probe failed",
+        })
+    elif result["plain_compile"]:
+        result.update({
+            "status": "DEGRADED",
+            "reason": "compiler works but ASan+UBSan compile/runtime/detection probes failed",
+        })
+    else:
+        result.update({
+            "status": "BROKEN",
+            "reason": "known-good C++ source did not compile",
+        })
+    return result
+
+
+def compiler_capabilities(compilers: Sequence[str] = ("clang++", "g++"),
+                          standard: str = "c++17",
+                          timeout: float = 15.0) -> Dict[str, Any]:
+    if (not isinstance(compilers, (list, tuple)) or not compilers
+            or any(not isinstance(item, str) or not item for item in compilers)):
+        raise ValueError("compilers must be a nonempty string array")
+    probes = [probe_cpp_compiler(item, standard, timeout) for item in compilers]
+    compatible = [item for item in probes if item["sanitizer_compatible"]]
+    plain = [item for item in probes if item["plain_compile"]]
+    selected = compatible[0]["executable"] if compatible else None
+    if (compatible and len(compatible) == len(probes)
+            and all(item["status"] == "AVAILABLE" for item in probes)):
+        status = "AVAILABLE"
+    elif compatible or plain:
+        status = "DEGRADED"
+    else:
+        status = "UNAVAILABLE"
+    return {
+        "schema_version": 1,
+        "status": status,
+        "standard": standard,
+        "requested": list(compilers),
+        "selected_sanitizer_compiler": selected,
+        "compilers": probes,
+        "fail_closed_without_sanitizer": True,
+        "claim_status": "TESTED_ONLY",
+        "claim_boundary": (
+            "Capabilities describe known-source probes in this environment; they do "
+            "not prove compatibility with every contest source or sanitizer finding."
+        ),
+    }
+
+
 def diagnose_cpp(source: Path, cwd: Path, input_data: bytes = b"",
                  compiler: str = "g++", standard: str = "c++17",
                  extra_flags: Sequence[str] = (), timeout: float = 3.0,
@@ -358,20 +555,61 @@ def diagnose_cpp(source: Path, cwd: Path, input_data: bytes = b"",
     source = source.resolve(strict=True)
     binary = output or (cwd / ".oisolver" / "diagnostics" / "sanitized-program")
     binary.parent.mkdir(parents=True, exist_ok=True)
-    compile_argv = sanitizer_compile_argv(source, binary, compiler, standard,
-                                          extra_flags)
-    compilation = run_command(compile_argv, cwd, timeout=max(10.0, timeout),
-                              max_output_bytes=8 * 1024 * 1024)
+    capability_suite: Optional[Dict[str, Any]] = None
+    if compiler == "auto":
+        capability_suite = compiler_capabilities(("clang++", "g++"), standard,
+                                                 max(10.0, timeout))
+        selected = capability_suite["selected_sanitizer_compiler"]
+        capability = next(
+            (item for item in capability_suite["compilers"]
+             if item.get("executable") == selected),
+            None,
+        )
+    else:
+        capability = probe_cpp_compiler(compiler, standard, max(10.0, timeout))
+        selected = capability.get("executable")
     report: Dict[str, Any] = {
         "schema_version": 1,
         "source": str(source),
         "binary": str(binary),
-        "compile": compilation.as_dict(),
+        "compiler": capability,
+        "compiler_suite": capability_suite,
         "claim_status": "TESTED_ONLY",
         "claim_boundary": "Diagnostics apply only to the executed input and sanitizer build; they are not a universal proof.",
+        "fail_closed": True,
     }
+    if capability is None or selected is None:
+        report.update({
+            "status": "COMPILER_UNAVAILABLE",
+            "degraded": True,
+            "findings": [],
+            "reason": "No requested compiler passed the ASan+UBSan capability probe.",
+        })
+        return report
+    if not capability.get("plain_compile"):
+        report.update({
+            "status": "COMPILER_BROKEN",
+            "degraded": True,
+            "findings": [],
+            "reason": capability.get("reason", "Compiler probe failed."),
+        })
+        return report
+    if not capability.get("sanitizer_compatible"):
+        report.update({
+            "status": "SANITIZER_UNAVAILABLE",
+            "degraded": True,
+            "findings": [],
+            "reason": capability.get("reason", "Sanitizer probe failed."),
+        })
+        return report
+    compile_argv = sanitizer_compile_argv(source, binary, selected, standard,
+                                          extra_flags)
+    compilation = run_command(compile_argv, cwd, timeout=max(10.0, timeout),
+                              max_output_bytes=8 * 1024 * 1024)
+    report["compile"] = compilation.as_dict()
     if compilation.returncode != 0 or compilation.timed_out:
-        report.update({"status": "COMPILE_ERROR", "findings": []})
+        report.update({"status": "COMPILE_ERROR", "degraded": False,
+                       "findings": []})
         return report
     environment = {
         "ASAN_OPTIONS": "abort_on_error=1:detect_leaks=0:symbolize=1",
@@ -385,6 +623,7 @@ def diagnose_cpp(source: Path, cwd: Path, input_data: bytes = b"",
     )
     report.update({
         "status": status,
+        "degraded": False,
         "run": execution.as_dict(),
         "findings": findings,
         "diagnostic_stderr": execution.stderr.decode("utf-8", errors="replace"),

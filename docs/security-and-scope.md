@@ -6,7 +6,9 @@
 - Sanitizer 证据保留原 stderr 并分类具体 UB/OOB/overflow；未触发不代表路径外安全。ASan 大量预留虚拟地址，与紧 `RLIMIT_AS` 联用可能产生假资源失败，应分开取证。
 - Candidate↔Interactor runner 是双进程协议 harness，不是恶意代码隔离。chronology、stderr、seed 和 failure localization 可能含私有题目内容，产物不得自动上传。
 - 失败输入默认写 `.oisolver/` 或 fixture output（均应被忽略）；可能含私有题面、代码输出或交互 transcript。
-- 自动 shrink 必须配置题目 validator；每次 proposal 还要复现 candidate/oracle 差异，拒绝项也记录 trace。canonical tree/graph/operation parser 只做 shape 校验，不能替代题目合法性。
+- 自动 shrink 必须配置题目 validator；每次 proposal 还要复现 candidate/oracle 差异，拒绝项也记录 trace。canonical tree/graph/operation parser 与 V3 declarative adapter 只做 shape/映射校验，不能替代题目合法性；adapter schema 错拼会 fail closed。
+- `compiler-capabilities` 会实际编译／运行 known probe；无 sanitizer-compatible compiler 时 `diagnose-cpp` 与 repair workflow 停止，不静默使用 unsanitized binary。缺 optional clang/AST 明确记 degraded。
+- `repair run` 不自动改 C++，但会在 native backend 执行用户配置的 generator、validator、oracle 和 binary；它只核对声明的 patched file 授权，函数边界和其他 workspace diff 仍需人工审查。不可信材料必须移到外部隔离 runner。
 - key-free ZIP verifier 保证 archive 成员不含 controller key/reference/test 路径或答案字段；它不能阻止运行进程读取另一个已挂载目录。真实 blind run 必须在无法挂载源 checkout 的外部 OS/container workspace。
 - Catalog 只读桥不联网更新；显式禁止更新／刷新命令。来源文本和许可由 CPscore 管理。
 - evidence record 的 authorized paths 会被校验，但它不是文件系统强制沙箱；实际编辑仍由宿主权限控制。

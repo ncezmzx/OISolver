@@ -1,0 +1,148 @@
+{
+  "claim_boundary": "Capabilities describe known-source probes in this environment; they do not prove compatibility with every contest source or sanitizer finding.",
+  "claim_status": "TESTED_ONLY",
+  "compilers": [
+    {
+      "available": false,
+      "clang_ast": {
+        "available": false,
+        "reason": "compiler unavailable"
+      },
+      "executable": null,
+      "fail_closed": true,
+      "plain_compile": false,
+      "reason": "clang++ was not found on PATH or as a file",
+      "requested": "clang++",
+      "sanitizer_compatible": false,
+      "sanitizer_compile": false,
+      "sanitizer_detection": false,
+      "sanitizer_runtime": false,
+      "standard": "c++17",
+      "status": "UNAVAILABLE"
+    },
+    {
+      "available": true,
+      "clang_ast": {
+        "available": false,
+        "reason": "not a clang compiler"
+      },
+      "executable": "/usr/bin/g++",
+      "fail_closed": true,
+      "plain_compile": true,
+      "plain_compile_result": {
+        "argv": [
+          "/usr/bin/g++",
+          "-std=c++17",
+          "-fsyntax-only",
+          "/tmp/oisolver-compiler-probe-uj2uww4c/probe.cpp"
+        ],
+        "classification": "PASS",
+        "elapsed_seconds": 0.010099,
+        "isolation": {
+          "complete_security_boundary": false,
+          "filesystem_namespace": false,
+          "network_isolated": false,
+          "warning": "Native execution does not isolate filesystem or network; allow_network=false is not enforced."
+        },
+        "limits": null,
+        "returncode": 0,
+        "sandbox_backend": "native",
+        "stderr_bytes": 0,
+        "stderr_preview": "",
+        "stdout_bytes": 0,
+        "stdout_preview": "",
+        "timed_out": false
+      },
+      "reason": "",
+      "requested": "g++",
+      "sanitizer_compatible": true,
+      "sanitizer_compile": true,
+      "sanitizer_compile_result": {
+        "argv": [
+          "/usr/bin/g++",
+          "-std=c++17",
+          "-g",
+          "-O1",
+          "-fsanitize=address,undefined",
+          "-fno-omit-frame-pointer",
+          "/tmp/oisolver-compiler-probe-uj2uww4c/probe.cpp",
+          "-o",
+          "/tmp/oisolver-compiler-probe-uj2uww4c/probe"
+        ],
+        "classification": "PASS",
+        "elapsed_seconds": 0.07076,
+        "isolation": {
+          "complete_security_boundary": false,
+          "filesystem_namespace": false,
+          "network_isolated": false,
+          "warning": "Native execution does not isolate filesystem or network; allow_network=false is not enforced."
+        },
+        "limits": null,
+        "returncode": 0,
+        "sandbox_backend": "native",
+        "stderr_bytes": 0,
+        "stderr_preview": "",
+        "stdout_bytes": 0,
+        "stdout_preview": "",
+        "timed_out": false
+      },
+      "sanitizer_detection": true,
+      "sanitizer_detection_result": {
+        "argv": [
+          "/tmp/oisolver-compiler-probe-uj2uww4c/probe",
+          "trigger"
+        ],
+        "classification": "SANITIZER_FINDING",
+        "elapsed_seconds": 0.003802,
+        "isolation": {
+          "complete_security_boundary": false,
+          "filesystem_namespace": false,
+          "network_isolated": false,
+          "warning": "Native execution does not isolate filesystem or network; allow_network=false is not enforced."
+        },
+        "limits": null,
+        "returncode": 1,
+        "sandbox_backend": "native",
+        "stderr_bytes": 145,
+        "stderr_preview": "/tmp/oisolver-compiler-probe-uj2uww4c/probe.cpp:2:72: runtime error: signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'\n",
+        "stdout_bytes": 0,
+        "stdout_preview": "",
+        "timed_out": false
+      },
+      "sanitizer_runtime": true,
+      "sanitizer_runtime_result": {
+        "argv": [
+          "/tmp/oisolver-compiler-probe-uj2uww4c/probe"
+        ],
+        "classification": "PASS",
+        "elapsed_seconds": 0.003851,
+        "isolation": {
+          "complete_security_boundary": false,
+          "filesystem_namespace": false,
+          "network_isolated": false,
+          "warning": "Native execution does not isolate filesystem or network; allow_network=false is not enforced."
+        },
+        "limits": null,
+        "returncode": 0,
+        "sandbox_backend": "native",
+        "stderr_bytes": 0,
+        "stderr_preview": "",
+        "stdout_bytes": 0,
+        "stdout_preview": "",
+        "timed_out": false
+      },
+      "standard": "c++17",
+      "status": "AVAILABLE",
+      "version": "g++ (Debian 12.2.0-14+deb12u1) 12.2.0"
+    }
+  ],
+  "fail_closed_without_sanitizer": true,
+  "requested": [
+    "clang++",
+    "g++"
+  ],
+  "schema_version": 1,
+  "selected_sanitizer_compiler": "/usr/bin/g++",
+  "standard": "c++17",
+  "status": "DEGRADED"
+}

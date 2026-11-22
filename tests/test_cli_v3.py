@@ -12,12 +12,17 @@ from oisolver.cli import main, parser
 ROOT = Path(__file__).resolve().parents[1]
 
 
-class V2Cli(unittest.TestCase):
-    def test_v2_version_and_commands_are_registered(self):
-        self.assertEqual(oisolver.__version__, "2.0.0")
+class V3Cli(unittest.TestCase):
+    def test_v3_version_and_commands_are_registered(self):
+        self.assertEqual(oisolver.__version__, "3.0.0")
         for argv in (["interactive", "--config", "x.json"],
                      ["diagnose-cpp", "--source", "x.cpp"],
+                     ["compiler-capabilities"],
                      ["style", "--before", "a.cpp", "--after", "b.cpp"],
+                     ["style-calibrate", "--corpus", "corpus.json"],
+                     ["repair", "init", "--statement", "s.md", "--source", "x.cpp",
+                      "--output", "repair.json"],
+                     ["repair", "run", "--config", "repair.json"],
                      ["eval", "verify-bundle", "bundle.zip"],
                      ["eval", "experiment-prepare", "--cases", "cases.json",
                       "--instruction", "instruction.txt", "--skill-dir", "skill",

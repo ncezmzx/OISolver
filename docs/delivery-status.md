@@ -1,67 +1,95 @@
-# OISolver V2 delivery status
+# OISolver V3 delivery status
 
 ## 已设计
 
-- 保留五态 `PROVED / REFUTED / CONDITIONAL / TESTED_ONLY / UNRESOLVED`，且 `logical-gap` 只能作用于精确 `reasoning-step`。
-- CPscore 的真实 `catalog.py + catalog.json` 仍是唯一 Catalog 身份源；OISolver 仅持有以其稳定 ID 为外键的小型 overlay。OIBlogScore 只接收 `verdict_transfer=false` 的中性证据。
-- Agent 仍负责题意、原思路、证明与授权；确定性 runtime 负责可复现执行、校验、证据和指标。有限测试不升级为证明。
-- V2 扩展为：受 validator+mismatch 双门禁的树／图／操作序列 shrinker；Sanitizer、Linux rlimit 与 Candidate↔Interactor runner；原子 proof chain 与 OI gap probe；可验证 key-free ZIP 和固定模型对照协议；C++ 最小补丁／码风指标。
+- V3 是 V2 上的增量：不重建 `domain_shrinkers.py`、实验控制器、proof-chain、Catalog 或 OIBlogScore 边界。
+- 五态仍为 `PROVED / REFUTED / CONDITIONAL / TESTED_ONLY / UNRESOLVED`；`logical-gap` 仍只能精确作用于 `claim_scope=reasoning-step`。有限测试、Sanitizer、AST 和 style score 不升级为证明。
+- CPscore 的真实 `catalog.py + catalog.json` 仍是唯一 Catalog identity source；OISolver 只持稳定 ID foreign-key overlay。OIBlogScore 仍只接收 `verdict_transfer=false` 的中立证据。
+- 任意 shrink proposal 必须同时通过题目 validator 并复现 candidate/oracle mismatch；adapter shape check 不能替代 validator。
+- “不完整题面 + WA code”链仍由 Agent 负责事实、未知、oracle 正确性、首偏离、根因和补丁；CLI 只编排可复现机械层。
 
 ## 已实现
 
-| Deliverable | State / evidence |
+| V3 deliverable | Implementation / bounded behavior |
 |---|---|
-| Modular Skill and dynamic router | 13 References，quality gate 检查链接和 V2 runtime 模块。 |
-| Domain shrinkers | tree leaf/subtree/weights/reindex；graph edge/isolate/reindex/weight + connected/DAG/simple；operation binary/single deletion + interval/value shrink。 |
-| Guarded differential integration | 每个 proposal 都过外部 validator 且复现 mismatch；保留 seed、原 failure、hash 和完整 trace。 |
-| C++ diagnostics/resources | ASan+UBSan 分类；Linux `RLIMIT_AS/RLIMIT_STACK`；bubblewrap 请求不可用时 fail closed。 |
-| Interactive execution | Candidate/Interactor 独立进程、按序双向 traffic、query/step limit、首个协议失败与 transcript hash。 |
-| Proof evaluation | premises、edge cases、依赖有向链、闭合结论、equivalence/greedy/DP/amortized/randomized probes、missing-premise 反例建议。 |
-| Blind experiment | deterministic key/reference/test-free ZIP verifier；matched baseline/skill bundles；同 model/build/settings/experiment 强校验及五类指标。 |
-| C++ patch metrics | token、轻量 structural tree、可选 clang JSON AST、nonessential lines、identifier/macro/indent/blank/fast-I/O/global-array retention。 |
-| CLI | `difftest`、`interactive`、`diagnose-cpp`、`style`、`eval isolate/verify-bundle/experiment-prepare/compare`。 |
-| Reproducible examples | `docs/v2-reproducible-examples.md`：seed `20261121` 交互例；base seed `424242` 加权树 shrink E2E。 |
+| Declarative OI adapter | `input_adapters.py` 支持 single/counted `T`、逐 case 删除与缩小、0/1-index、字段重排的 weighted/unweighted tree/graph、grid/matrix、mixed-arity operations；未知 schema 字段 fail closed。 |
+| Existing-shrinker integration | `differential.py` 的 `shrink.adapter` 支持 inline 或 `schema_file`；与 `shrink.domain` 互斥，继续复用 V2 structural proposals 和 validator+mismatch session/trace。 |
+| Required E2E | 三个 counted case、0-index、`w u v` weighted tree：62→10 bytes，3 cases→1，5 vertices/4 edges→2/1；13 次 proposal，最终合法且 mismatch。 |
+| Style calibration | 12 个可编译 OI patch（9 acceptable/3 reject），覆盖 compact/expanded、`#define int long long`、global array/vector、iostream/scanf/getchar 和 bitwise；0.10 为测试候选中最严格的 zero-FP/zero-FN threshold。 |
+| Compiler capability | 实际编译/运行 C++17 + ASan/UBSan probe；clang 存在时另测真实 JSON AST。无 compiler/sanitizer 时 diagnostics fail closed；仅缺 optional clang 时明确 `DEGRADED`。 |
+| Progressive repair workflow | `repair init/run` 强制八阶段 Debug evidence，复现 diagnostic answer mismatch，original difftest+guarded shrink，patched same-seed regression，Sanitizer 与 calibrated style gate；报告 algorithm correctness 为 `UNRESOLVED`。 |
+| Skill routing | `SKILL.md` 与 debugging/differential/optimization references 路由 adapter、capability、repair、calibration，保持直给模式和授权边界。 |
+| CI definition | Linux job保留 g++ fixture，并生成 capability report；若 clang 实际存在则编译/运行 ASan+UBSan probe 并解析 `-ast-dump=json`，否则输出 degraded。 |
 
-V2 runtime 文件为 `src/oisolver/{domain_shrinkers,differential,process,evaluation,experiment,style,cli}.py`。未复制或修改 CPscore Catalog；未修改 OIBlogScore 仓库。
+V3 runtime 增量为 `src/oisolver/input_adapters.py` 与 `src/oisolver/workflow.py`，并局部扩展 `differential.py`、`process.py`、`style.py`、`cli.py`。未复制或修改 CPscore Catalog，未修改 OIBlogScore 仓库。
 
 ## 实际测试（命令与环境）
 
-环境：Linux x86_64、Python 3.11.2、g++ 12.2.0；真实 CPscore checkout `084c4ef855c6c9092ba40e23c047f8e2391dd144`，Catalog 635 项。
+本地环境：2026-11-21，Linux x86_64，Python 3.11.2，g++ 12.2.0；`clang++`、`bwrap`、Docker/Podman/Firejail 和 model runner 均未检测到。CPscore integration checkout 为 `084c4ef855c6c9092ba40e23c047f8e2391dd144`（Catalog schema v1 / 635 entries）。
 
 ```sh
 CPSCORE_CATALOG=/tmp/cpscore-oisolver-integration/resources/algorithm-catalog \
   PYTHONPATH=src python3 -m unittest discover -s tests -v
-# 63/63 PASS, 4.464 s
+# 78 total in 11.527 s: 77 PASS; 1 optional real-clang test SKIP locally
 
 PYTHONPATH=src python3 tools/check_quality.py \
   --catalog /tmp/cpscore-oisolver-integration/resources/algorithm-catalog
 # PASS: 1 Skill, 13 References, 7 claims, 30 cases, 635 upstream entries
+
+python3 -m compileall -q src tools tests
+# PASS
+
+git diff --check
+# PASS
+
+python3 -m pip wheel --no-deps --no-build-isolation \
+  --wheel-dir /tmp/oisolver-v3-wheel .
+python3 -m pip install --no-index --no-deps \
+  --target /tmp/oisolver-v3-install /tmp/oisolver-v3-wheel/oisolver-3.0.0-py3-none-any.whl
+# PASS; installed version 3.0.0, adapter/workflow imports and CLI parser smoke;
+# wheel SHA-256 b4ccbc4c2c2d8830d27a084ce5e5dd821250c0ed9f93f48ddd777bf39b8e32aa
 ```
 
-63 tests 包含原 30 项回归及独立 V2 tests：结构 shrinker/E2E、实际 UBSan overflow、64 MiB hard-memory enforcement、交互 chronology/非法消息、proof-chain gate/probes、key-free bundle/fixed-model comparison、C++ minimal/destructive patch metrics 和 fake-clang JSON AST parser。完整命令无 pipe `ResourceWarning`。
+V3 focused executions:
 
-已执行 fixture 结果：
+```sh
+PYTHONPATH=src python3 -m oisolver.cli difftest \
+  --config tests/fixtures/difftest-adapter-tree/config.json
+# expected exit 1 / MISMATCH; base seed 314159; case seed 2534161336896504054;
+# original 62 bytes, minimized 10; final_legal=true, final_mismatch=true
 
-- tree：base seed `424242`，case seed `9021162741047655247`，67→5 bytes，9 次接受，最终合法且 mismatch 复现；
-- interactive：seed `20261121`，traffic `5 / ? 1 / 7 / ! 7`，1 query，状态 `PASS_WITHIN_TESTED_INTERACTION`；
-- Golden reference 18/18、blind reference 12/12，proof-chain support 均为 1.0。它们只验证 grader/reference conformance。
-- V2 commit `f65ecba` 的 push run `44973231965` 与 PR run `44973236080` 均为 4/4 PASS（Ubuntu 22.04/Windows × Python 3.8/3.12）。
+PYTHONPATH=src python3 -m oisolver.cli style-calibrate \
+  --corpus tests/fixtures/style-calibration/corpus.json \
+  --output /tmp/style-calibration.json
+# PASS; 12 samples; selected 0.10; FP=0/9, FN=0/3 at selected threshold
 
-完整 compile、wheel/install、C++ fixture、whitespace 与本分支远端 CI 结果见 `docs/evaluation-results.md`；该文件只记录实际执行结果。
+g++ -std=c++17 -fsyntax-only tests/fixtures/style-calibration/*.cpp
+# PASS; all 24 before/after translation units compile
+
+PYTHONPATH=src python3 -m oisolver.cli compiler-capabilities \
+  --output /tmp/compiler-capabilities.json
+# DEGRADED: clang++ unavailable; g++ C++17 + ASan/UBSan compile/clean-run/overflow-detection PASS
+
+PYTHONPATH=src python3 -m oisolver.cli repair run \
+  --config tests/fixtures/repair-workflow/workflow.json
+# COMPLETE_TESTED_WORKFLOW; all six workflow checks true; style score 99.462
+```
+
+The previous verified V2 evidence (63-test baseline and four-job GitHub Actions) remains in `docs/evaluation-results.md` history. V3 commands and exact bounded outputs are expanded in `docs/v3-reproducible-examples.md`.
 
 ## 未执行
 
-- 未调用任何真实模型完成 Baseline-vs-Skill blind experiment；只有 framework 与 synthetic independent test。因此没有 Skill 增益、Agent recall 或真实 false-positive 数值。
-- 未进行独立人类数学审稿或真实用户补丁 corpus 评分。
-- 本 V2 revision 的 macOS、非 g++ compiler matrix 与 bubblewrap 成功路径未执行；本环境没有 `bwrap`，只验证了 fail-closed。
-- Sanitizer/rlimit/interactive 的单元 fixture 不是在线判题、任意恶意程序或所有协议的认证。
+- **真实 fixed-model Baseline-vs-Skill 12-case blind experiment 未执行。** 当前 workspace 没有 model executable/service/configuration；本 Agent 已见 controller repository paths，不能冒充 independently blind runner。Model ID/build/settings、raw model logs、per-case live outcomes、recall、false-positive rate、progressive-debug compliance、counterexample size、style score 和 failure attribution 均无真实数值，状态严格为 `UNRESOLVED`。未用 synthetic/reference answers 替代。
+- 本地未执行 clang++ compile/sanitizer/AST 成功路径，因为 `clang++` 不存在；只执行了明确 unavailable/degraded 与 fake-clang parser tests。CI 中也只有 runner 实际提供 clang 时才可形成成功证据。
+- 未执行 macOS、真实 online judge、成功 bubblewrap/container isolation、任意恶意程序认证或独立人类数学审稿。
+- 12-sample style corpus 是项目构造的现实 OI 形态 calibration set，不是匿名真实用户 patch 的统计代表样本。
 
 ## 已知限制
 
-1. proof-chain checker 验证结构、依赖和显式义务，不机械证明自然语言命题为真。
-2. domain codecs 是文档化 canonical 格式，不会猜任意题面格式；题目 validator 始终必须外置。
-3. shrink 是相对 proposal 邻域的 validator-relative 最小化，不保证数学全局最小。
-4. native rlimits 不隔离文件系统或网络；真正不可信执行需独立容器／OS sandbox。
-5. key-free archive 只保证 archive 内容；真正 blind 必须在无法挂载控制 checkout 的隔离 workspace 运行。
-6. style score 是保守启发式，不等价于语义正确性；clang AST 是可选后端。
-7. CPscore schema v1 与所审 revision 之外的未来兼容性需要重新审计。
+1. Adapter 是显式 line-oriented schema，不猜任意题面格式；edge 目前只支持 endpoint 加可选单权字段。题目级数值、连通、操作依赖和字符语义仍由外部 validator 裁定。
+2. Shrinking 是 proposal-neighborhood、validator-relative 的贪心缩小，不保证数学全局最小；预算耗尽也不等价于局部最小证明。
+3. Repair workflow 验证 supplied event order 和执行证据，无法证明 Agent 隐藏时间线；它不自动生成 oracle、根因或 patch，函数级授权边界仍需人工审查 diff。
+4. Compiler probe 只覆盖一个 known-good source 和当前 runtime；对任意 contest headers/flags/platform 的兼容性仍未知。Optional AST 是结构信号，不是语义等价证明。
+5. Style calibration 的 zero-FP/zero-FN 仅对 12 个标注样本成立；高分不证明 patch 正确，低分也不能否定已授权的大重构。
+6. Native execution 不隔离 filesystem/network；`allow_network=false` 在 native backend 不可执行。真正不可信运行仍需独立 OS/container boundary。
+7. Key-free ZIP 只约束 archive 内容；真实 blind 还要求 runner workspace 不能挂载 controller checkout、keys、references、tests 或历史答案。

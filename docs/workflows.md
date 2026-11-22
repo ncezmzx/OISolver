@@ -27,3 +27,7 @@
 ## 7. 与 OIBlogScore
 
 把已验证的求解结论导出为中立 evidence → OIBlogScore 绑定文章原文和版本 → 独立选择六态 verdict、覆盖率和修复政策。求解代码的授权修改不转化为博客修改授权。
+
+## 8. V3 渐进修复链
+
+不完整题面按四类台账保留未知 → `repair init` 创建 fail-closed scaffold → Agent 依次填写模型、诊断输入、正确答案、轨迹、首偏离、不变量／根因、最小修复、回归 → 独立 oracle + 合法生成器 + validator → `repair run` 自动执行 compiler/sanitizer probe → 原程序诊断与 difftest/shrink → 最小 style gate → patched sanitizer → 相同 seed 回归。任一机械层失败就停在对应状态；即使全链完成，全范围算法正确性也不从有限测试升级，仍需独立证明。

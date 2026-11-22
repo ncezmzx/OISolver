@@ -35,7 +35,7 @@
 
 默认先静态核验。用户授权且环境合适时编译运行；记录编译器版本、标准、优化／警告／Sanitizer 参数、输入和预期。编译成功不是正确性证据；Sanitizer 只覆盖实际路径。
 
-V2 的 `diagnose-cpp` 以 `-fsanitize=address,undefined -fno-omit-frame-pointer -g` 编译，区分堆／栈越界、UAF、signed overflow、shift、除零、空指针等诊断，并保留原始 stderr；这类证据不能降格成笼统 WA/RE。Linux 原生 runner 可设置 `RLIMIT_AS` 与 `RLIMIT_STACK`，报告 signal／limit 与 MLE 推断，但统计字段可能只是近似，且 sanitizer 与紧内存限额不宜混用。`bubblewrap` 后端只有在可用时才提供额外文件系统／网络边界；请求而不可用时必须失败关闭。
+V2 的 `diagnose-cpp` 以 `-fsanitize=address,undefined -fno-omit-frame-pointer -g` 编译，区分堆／栈越界、UAF、signed overflow、shift、除零、空指针等诊断，并保留原始 stderr；这类证据不能降格成笼统 WA/RE。V3 先用 known-good source 实际检查 compiler、C++ standard、ASan+UBSan compile/runtime；无兼容后端时 fail closed，不静默跑普通 binary。`auto` 优先实际通过 probe 的 clang++，再选 g++；clang 缺失或 AST probe 失败必须写 unavailable/degraded。Linux 原生 runner 可设置 `RLIMIT_AS` 与 `RLIMIT_STACK`，报告 signal／limit 与 MLE 推断，但统计字段可能只是近似，且 sanitizer 与紧内存限额不宜混用。`bubblewrap` 后端只有在可用时才提供额外文件系统／网络边界；请求而不可用时必须失败关闭。
 
 执行不可信代码需要外部沙箱。原生超时和 rlimit 不是完整 CPU／文件系统／网络隔离；`allow_network=false` 在 native 后端只会触发警告，不会伪称已禁网。
 

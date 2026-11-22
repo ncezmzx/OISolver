@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "production_threshold": 0.1,
+  "threshold_candidates": [0.05, 0.1, 0.15, 0.2],
+  "required_tags": [
+    "compact-formatting",
+    "expanded-formatting",
+    "define-int-long-long",
+    "global-array",
+    "vector",
+    "fast-io",
+    "bitwise-idiom"
+  ],
+  "samples": [
+    {
+      "id": "compact-macro-global-array-lis",
+      "before": "p01-compact-macro-array.before.cpp",
+      "after": "p01-compact-macro-array.after.cpp",
+      "acceptable": true,
+      "expected_replacements": [["upper_bound", "lower_bound"]],
+      "tags": ["compact-formatting", "define-int-long-long", "global-array", "vector", "fast-io"],
+      "required_warning_codes": []
+    },
+    {
+      "id": "expanded-vector-loop-bound",
+      "before": "p02-expanded-vector.before.cpp",
+      "after": "p02-expanded-vector.after.cpp",
+      "acceptable": true,
+      "expected_replacements": [["i <= n", "i < n"]],
+      "tags": ["expanded-formatting", "vector", "fast-io"],
+      "required_warning_codes": []
+    },
+    {
+      "id": "compact-bitwise-parentheses",
+      "before": "p03-bitwise-idiom.before.cpp",
+      "after": "p03-bitwise-idiom.after.cpp",
+      "acceptable": true,
+      "expected_replacements": [["mask & 1 << i == 0", "(mask & (1 << i)) == 0"]],
+      "tags": ["compact-formatting", "bitwise-idiom"],
+      "required_warning_codes": []
+    },
+    {
+      "id": "scanf-global-array-bound",
+      "before": "p04-scanf-global.before.cpp",
+      "after": "p04-scanf-global.after.cpp",
+      "acceptable": true,
+      "expected_replacements": [["i < n", "i <= n"]],
+      "tags": ["expanded-formatting", "global-array", "fast-io"],
+      "required_warning_codes": []
+    },
+    {
+      "id": "getchar-reader-sign",
+      "before": "p05-getchar-reader.before.cpp",
+      "after": "p05-getchar-reader.after.cpp",
+      "acceptable": true,
+      "expected_replacements": [["sign=0", "sign=1"]],
+      "tags": ["compact-formatting", "fast-io"],
+      "required_warning_codes": []
+    },
+    {
+      "id": "global-vector-tree-endpoint",
+      "before": "p06-global-vectors.before.cpp",
+      "after": "p06-global-vectors.after.cpp",
+      "acceptable": true,
+      "expected_replacements": [["g[u].push_back(u)", "g[u].push_back(v)"]],
+      "tags": ["compact-formatting", "vector", "fast-io"],
+      "required_warning_codes": []
+    },
+    {
+      "id": "prefix-query-boundary",
+      "before": "p07-prefix-boundary.before.cpp",
+      "after": "p07-prefix-boundary.after.cpp",
+      "acceptable": true,
+      "expected_replacements": [["pref[l]", "pref[l - 1]"]],
+      "tags": ["expanded-formatting", "global-array"],
+      "required_warning_codes": []
+    },
+    {
+      "id": "small-explanatory-comment",
+      "before": "p08-small-comment.before.cpp",
+      "after": "p08-small-comment.after.cpp",
+      "acceptable": true,
+      "expected_replacements": [["n * (n - 1) / 2", "n * (n + 1) / 2"]],
+      "tags": ["expanded-formatting", "fast-io"],
+      "required_warning_codes": []
+    },
+    {
+      "id": "safe-mid-preserves-int-macro",
+      "before": "p09-safe-mid-macro.before.cpp",
+      "after": "p09-safe-mid-macro.after.cpp",
+      "acceptable": true,
+      "expected_replacements": [["(l+r)/2", "l+(r-l)/2"]],
+      "tags": ["compact-formatting", "define-int-long-long", "global-array", "fast-io"],
+      "required_warning_codes": []
+    },
+    {
+      "id": "destructive-modernization",
+      "before": "n01-destructive-modernize.before.cpp",
+      "after": "n01-destructive-modernize.after.cpp",
+      "acceptable": false,
+      "expected_replacements": [],
+      "tags": ["compact-formatting", "define-int-long-long", "global-array", "vector", "fast-io"],
+      "required_warning_codes": ["MACRO_CHANGED_OR_REMOVED", "FAST_IO_REMOVED", "GLOBAL_ARRAY_REPLACED_BY_VECTOR"]
+    },
+    {
+      "id": "core-fix-plus-unrelated-edits",
+      "before": "n02-unrelated-edits.before.cpp",
+      "after": "n02-unrelated-edits.after.cpp",
+      "acceptable": false,
+      "expected_replacements": [["max(ans, x)", "min(ans, x)"]],
+      "tags": ["expanded-formatting", "vector", "fast-io"],
+      "required_warning_codes": ["NONESSENTIAL_LINE_CHANGES"]
+    },
+    {
+      "id": "rename-and-remove-fast-io",
+      "before": "n03-fast-io-rename.before.cpp",
+      "after": "n03-fast-io-rename.after.cpp",
+      "acceptable": false,
+      "expected_replacements": [],
+      "tags": ["expanded-formatting", "vector", "fast-io"],
+      "required_warning_codes": ["IDENTIFIERS_NOT_PRESERVED", "VARIABLE_NAMES_NOT_PRESERVED", "FAST_IO_REMOVED"]
+    }
+  ]
+}

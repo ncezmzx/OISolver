@@ -11,7 +11,7 @@
 
 - 保留用户未提交改动，不使用 reset、clean、checkout 覆盖工作树。
 - 修复用户代码时优先最小局部修改，保持变量名、结构、缩进、宏和 I/O；未经授权不改其他文件。
-- 任何 generic 或 tree/graph/operation shrink proposal 都必须先过题目合法性校验器且复现 candidate/oracle 差异；拒绝项、seed、原失败和 trace 同样保留。没有校验器时只保存原失败样例。
+- 任何 generic、tree/graph/operation 或 V3 adapter/grid/counted-case shrink proposal 都必须先过题目合法性校验器且复现 candidate/oracle 差异；拒绝项、seed、原失败和 trace 同样保留。没有校验器时只保存原失败样例。
 - `PROVED`／`CONDITIONAL` 需有显式 premises、edge cases、原子步骤、依赖和闭合 conclusion；结构检查不替代数学复核。
 - Sanitizer、rlimit、交互 transcript、blind ZIP 与 C++ style score 都只按实际覆盖范围报告，不夸大为证明或强隔离。
 

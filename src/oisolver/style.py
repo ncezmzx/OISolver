@@ -1,5 +1,6 @@
 """Lightweight C++ patch minimality and style-preservation metrics."""
 import difflib
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -383,3 +384,209 @@ def evaluate_cpp_files(before_path: Path, after_path: Path,
         clang,
         max_nonessential_line_rate,
     )
+
+
+def _style_corpus(path: Path) -> Dict[str, Any]:
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise StyleError("Style corpus repeats JSON key {!r}".format(key))
+            value[key] = item
+        return value
+
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"),
+                           object_pairs_hook=unique)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise StyleError("Cannot read style calibration corpus: {}".format(exc))
+    if not isinstance(value, dict) or value.get("schema_version") != 1:
+        raise StyleError("Style calibration corpus requires schema_version 1")
+    allowed = {"schema_version", "production_threshold", "threshold_candidates",
+               "required_tags", "samples"}
+    if set(value) - allowed:
+        raise StyleError("Style corpus has unknown top-level fields")
+    thresholds = value.get("threshold_candidates")
+    if (not isinstance(thresholds, list) or not thresholds
+            or any(not isinstance(item, (int, float)) or isinstance(item, bool)
+                   or not 0 <= item <= 1 for item in thresholds)):
+        raise StyleError("threshold_candidates must contain values within [0,1]")
+    if len(set(thresholds)) != len(thresholds):
+        raise StyleError("threshold_candidates must be unique")
+    production = value.get("production_threshold")
+    if (not isinstance(production, (int, float)) or isinstance(production, bool)
+            or production not in thresholds):
+        raise StyleError("production_threshold must be one threshold candidate")
+    required_tags = value.get("required_tags")
+    if (not isinstance(required_tags, list) or not required_tags
+            or any(not isinstance(item, str) or not item for item in required_tags)):
+        raise StyleError("required_tags must be a nonempty string array")
+    samples = value.get("samples")
+    if not isinstance(samples, list) or len(samples) < 10:
+        raise StyleError("Style calibration requires at least 10 samples")
+    seen = set()
+    sample_allowed = {"id", "before", "after", "acceptable",
+                      "expected_replacements", "tags", "required_warning_codes"}
+    for row in samples:
+        if not isinstance(row, dict) or set(row) - sample_allowed:
+            raise StyleError("Style calibration sample has unknown fields")
+        sample_id = row.get("id")
+        if not isinstance(sample_id, str) or not sample_id or sample_id in seen:
+            raise StyleError("Style sample IDs must be unique nonempty strings")
+        seen.add(sample_id)
+        if type(row.get("acceptable")) is not bool:
+            raise StyleError("Style sample acceptable must be boolean")
+        for field in ("before", "after"):
+            if not isinstance(row.get(field), str) or not row[field]:
+                raise StyleError("Style sample {} must be a path".format(field))
+        replacements = row.get("expected_replacements", [])
+        if (not isinstance(replacements, list)
+                or any(not isinstance(item, list) or len(item) != 2
+                       or any(not isinstance(part, str) or not part for part in item)
+                       for item in replacements)):
+            raise StyleError("Style sample expected_replacements is invalid")
+        for field in ("tags", "required_warning_codes"):
+            items = row.get(field, [])
+            if (not isinstance(items, list)
+                    or any(not isinstance(item, str) or not item for item in items)):
+                raise StyleError("Style sample {} must be strings".format(field))
+    return value
+
+
+def calibrate_cpp_style(corpus_path: Path,
+                        clang: Optional[str] = None) -> Dict[str, Any]:
+    """Evaluate labeled OI repairs and select the strictest zero-error line gate."""
+    corpus_path = corpus_path.resolve(strict=True)
+    corpus = _style_corpus(corpus_path)
+    root = corpus_path.parent
+    loaded = []
+    observed_tags = set()
+    for row in corpus["samples"]:
+        paths = []
+        for field in ("before", "after"):
+            path = (root / row[field]).resolve(strict=True)
+            try:
+                path.relative_to(root)
+            except ValueError:
+                raise StyleError("Style sample path escapes its corpus directory")
+            paths.append(path)
+        observed_tags.update(row.get("tags", []))
+        loaded.append((row, paths[0], paths[1]))
+
+    threshold_reports = []
+    reports_by_threshold: Dict[float, List[Dict[str, Any]]] = {}
+    for raw_threshold in sorted(corpus["threshold_candidates"]):
+        threshold = float(raw_threshold)
+        rows = []
+        for sample, before_path, after_path in loaded:
+            report = evaluate_cpp_files(
+                before_path, after_path,
+                [tuple(item) for item in sample.get("expected_replacements", [])],
+                clang, threshold,
+            )
+            warning_codes = sorted(item["code"] for item in report["warnings"])
+            required = set(sample.get("required_warning_codes", []))
+            rows.append({
+                "id": sample["id"],
+                "before": sample["before"],
+                "after": sample["after"],
+                "before_sha256": hashlib.sha256(before_path.read_bytes()).hexdigest(),
+                "after_sha256": hashlib.sha256(after_path.read_bytes()).hexdigest(),
+                "acceptable": sample["acceptable"],
+                "gate_passed": report["gate_passed"],
+                "score": report["score"],
+                "nonessential_change_rate": report["lines"][
+                    "nonessential_change_rate"
+                ],
+                "warning_codes": warning_codes,
+                "required_warnings_present": required.issubset(warning_codes),
+                "tags": sample.get("tags", []),
+            })
+        false_positive = sum(
+            item["acceptable"] and not item["gate_passed"] for item in rows
+        )
+        false_negative = sum(
+            not item["acceptable"] and item["gate_passed"] for item in rows
+        )
+        acceptable_total = sum(item["acceptable"] for item in rows)
+        unacceptable_total = len(rows) - acceptable_total
+        threshold_reports.append({
+            "threshold": threshold,
+            "acceptable_total": acceptable_total,
+            "unacceptable_total": unacceptable_total,
+            "false_positive_count": false_positive,
+            "false_positive_rate": (
+                false_positive / acceptable_total if acceptable_total else None
+            ),
+            "false_negative_count": false_negative,
+            "false_negative_rate": (
+                false_negative / unacceptable_total if unacceptable_total else None
+            ),
+        })
+        reports_by_threshold[threshold] = rows
+
+    zero_error = [
+        item for item in threshold_reports
+        if item["false_positive_count"] == 0
+        and item["false_negative_count"] == 0
+    ]
+    if zero_error:
+        selected = min(item["threshold"] for item in zero_error)
+    else:
+        selected = min(
+            threshold_reports,
+            key=lambda item: (
+                item["false_positive_count"] + item["false_negative_count"],
+                item["false_positive_count"], item["threshold"],
+            ),
+        )["threshold"]
+    selected_rows = reports_by_threshold[selected]
+    missing_tags = sorted(set(corpus["required_tags"]) - observed_tags)
+    required_warnings_ok = all(
+        item["required_warnings_present"] for item in selected_rows
+    )
+    declared = float(corpus["production_threshold"])
+    selected_summary = next(
+        item for item in threshold_reports if item["threshold"] == selected
+    )
+    passed = bool(
+        not missing_tags
+        and required_warnings_ok
+        and selected_summary["false_positive_count"] == 0
+        and selected_summary["false_negative_count"] == 0
+        and selected == declared
+    )
+    artifact_hash = hashlib.sha256()
+    artifact_hash.update(corpus_path.read_bytes())
+    for sample, before_path, after_path in loaded:
+        artifact_hash.update(sample["id"].encode("utf-8"))
+        artifact_hash.update(before_path.read_bytes())
+        artifact_hash.update(after_path.read_bytes())
+    try:
+        displayed_corpus = str(corpus_path.relative_to(Path.cwd().resolve()))
+    except ValueError:
+        displayed_corpus = str(corpus_path)
+    return {
+        "schema_version": 1,
+        "status": "PASS" if passed else "FAIL",
+        "claim_status": "TESTED_ONLY",
+        "corpus": displayed_corpus,
+        "corpus_sha256": hashlib.sha256(corpus_path.read_bytes()).hexdigest(),
+        "corpus_and_sources_sha256": artifact_hash.hexdigest(),
+        "samples": len(loaded),
+        "acceptable_samples": sum(row[0]["acceptable"] for row in loaded),
+        "unacceptable_samples": sum(not row[0]["acceptable"] for row in loaded),
+        "required_tags": corpus["required_tags"],
+        "observed_tags": sorted(observed_tags),
+        "missing_tags": missing_tags,
+        "threshold_sweep": threshold_reports,
+        "selected_threshold": selected,
+        "declared_production_threshold": declared,
+        "selected_samples": selected_rows,
+        "required_warnings_present": required_warnings_ok,
+        "calibration_passed": passed,
+        "claim_boundary": (
+            "The threshold is calibrated only to these labeled syntactic repair "
+            "samples; style scoring does not establish semantic correctness or necessity."
+        ),
+    }

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "test_cases": {
+    "mode": "counted",
+    "allow_case_deletion": true
+  },
+  "case": {
+    "kind": "tree",
+    "header_fields": ["n"],
+    "size_field": "n",
+    "index_base": 0,
+    "node_weights": false,
+    "edges": {
+      "fields": ["w", "u", "v"],
+      "u_field": "u",
+      "v_field": "v",
+      "weight_field": "w"
+    }
+  }
+}

@@ -1,6 +1,6 @@
-# OISolver V2 implementation and acceptance map
+# OISolver V2 foundation and V3 incremental acceptance map
 
-该文档记录 V2 在不重建、不削弱原架构前提下的实现映射。外部只读审计见 [research-audit.md](research-audit.md)，实际运行结果见 [evaluation-results.md](evaluation-results.md)。
+该文档保留 V2 在不重建、不削弱原架构前提下的实现映射。V3 只新增 declarative adapter、calibrated style/compiler capability 和 progressive repair orchestration；可复现细节见 [V3 examples](v3-reproducible-examples.md)，实际运行结果见 [evaluation-results.md](evaluation-results.md)。外部只读审计仍见 [research-audit.md](research-audit.md)。
 
 ## Preserved contracts
 
@@ -8,6 +8,16 @@
 - `logical-gap` 只能反驳精确 `reasoning-step`；不能外推到最终算法。
 - CPscore 原生 Catalog 是唯一 identity/query owner；OISolver overlay 只用稳定 ID 外键。
 - OIBlogScore 接收中性证据，`verdict_transfer=false`，不共享其博客队列／评分／修复 workflow。
+
+## V3 incremental acceptance map
+
+| Requirement | Increment without V2 rebuild | Gate |
+|---|---|---|
+| Counted/non-canonical inputs | `input_adapters.py` maps explicit layouts into existing `shrink_domain` codecs and renders proposals back | unit coverage for all four kinds + counted `w u v`, 0-index tree E2E |
+| Style false positives | 12 labeled realistic patch pairs and threshold sweep around existing metrics | selected 0.10 must have FP=0 and FN=0; required destructive warnings present |
+| clang/sanitizer capability | known-source compiler compile/runtime probe; optional real AST probe | missing sanitizer fail closed; missing optional clang reports degraded; CI runs real path only when installed |
+| End-to-end practical chain | `workflow.py` composes existing diagnose/difftest/style APIs around ordered Agent evidence | original mismatch + legal shrink, patched diagnostic + same-seed pass, sanitizer/style gates |
+| Real model effectiveness | retain V2 isolated bundles/controller; do not synthesize model output | if no runner, explicit `UNRESOLVED / executed=false` artifact with null metrics |
 
 ## V2 implementation phases
 

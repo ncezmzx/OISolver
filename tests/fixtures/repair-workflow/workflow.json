@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "statement": "statement.md",
+  "original_source": "wa.cpp",
+  "patched_source": "fixed.cpp",
+  "diagnostic_input": "diagnostic.in",
+  "correct_output": "diagnostic.out",
+  "diagnostic_comparison": "tokens",
+  "intake": {
+    "explicit_facts": ["Input contains n integers and asks for their sum."],
+    "source_confirmed_facts": ["The program reads n and stores values in a global array."],
+    "inferences": ["The final value must be included in the sum."],
+    "unknowns": ["Original n bound and aggregate multi-case bound are absent from the fragment."]
+  },
+  "authorization": {
+    "allowed_files": ["fixed.cpp"],
+    "allowed_scope": "the loop bound in main",
+    "algorithm_change_authorized": false
+  },
+  "debug_events": [
+    {"stage": "model", "evidence": "ans is the sum of values already read by the loop."},
+    {"stage": "diagnostic-input", "evidence": "n=3 and values 1,2,4 isolate the omitted final iteration."},
+    {"stage": "correct-answer", "evidence": "The independent arithmetic result is 1+2+4=7."},
+    {"stage": "trace", "evidence": "Iterations i=0,1 produce ans=3; i=2 is never entered."},
+    {"stage": "first-divergence", "evidence": "At i=2 the model requires reading 4 while the loop condition is already false."},
+    {"stage": "invariant-root-cause", "evidence": "The loop covers only n-1 values, violating complete input coverage."},
+    {"stage": "minimal-fix", "evidence": "Change only i<n-1 to i<n; preserve macros, globals, I/O, names, and algorithm."},
+    {"stage": "regression", "evidence": "Rerun the diagnostic, sanitizer build, and the same fixed-seed differential range."}
+  ],
+  "compiler": {
+    "name": "auto",
+    "standard": "c++17",
+    "release_flags": ["-O2", "-Wall", "-Wextra", "-pedantic"],
+    "timeout_seconds": 5
+  },
+  "differential_config": "difftest.json",
+  "expected_replacements": [["i<n-1", "i<n"]],
+  "max_nonessential_line_rate": 0.1,
+  "output_dir": "workflow-output"
+}

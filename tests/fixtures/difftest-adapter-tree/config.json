@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "seed": 314159,
+  "trials": 1,
+  "timeout_seconds": 2.0,
+  "max_output_bytes": 65536,
+  "comparison": "tokens",
+  "output_dir": "output",
+  "metadata": {
+    "purpose": "counted non-canonical weighted-tree adapter regression"
+  },
+  "generator": {
+    "argv": ["python3", "generator.py", "--seed", "{seed}"]
+  },
+  "candidate": {
+    "argv": ["python3", "candidate.py"]
+  },
+  "oracle": {
+    "argv": ["python3", "oracle.py"]
+  },
+  "shrink": {
+    "validator": {
+      "argv": ["python3", "validator.py"]
+    },
+    "adapter": {
+      "schema_file": "schema.json"
+    },
+    "max_attempts": 1000
+  }
+}

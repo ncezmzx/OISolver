@@ -12,4 +12,6 @@ dist/
 .oisolver/
 evaluation/bundles/
 tests/fixtures/difftest-tree/output/
+tests/fixtures/difftest-adapter-tree/output/
 tests/fixtures/interactive/output/
+tests/fixtures/repair-workflow/workflow-output/

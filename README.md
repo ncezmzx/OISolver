@@ -1,4 +1,4 @@
-# OISolver V2
+# OISolver V3
 
 **A rigorous OI / ICPC problem research, verification, debugging, and optimization Skill.**
 
@@ -27,7 +27,7 @@ Every material conclusion is one of `PROVED`, `REFUTED`, `CONDITIONAL`, `TESTED_
 Agent reasoning and deterministic tooling are intentionally separated:
 
 - the Skill understands, proves, refutes, explains, and decides modification scope;
-- the Python package delegates CPscore queries, validates evidence records, runs reproducible generic and tree/graph/operation differential tests, guards every shrink proposal with legality plus mismatch checks, records interactive protocols and sanitizer/resource evidence, scores C++ patch preservation, prepares verifiable key-free bundles, and grades structured labels and proof chains;
+- the Python package delegates CPscore queries, validates evidence records, runs reproducible generic and declaratively adapted tree/graph/grid/operation differential tests, guards every shrink proposal with legality plus mismatch checks, records interactive protocols and compiler/sanitizer capabilities, calibrates C++ patch preservation, runs the progressive repair chain, prepares verifiable key-free bundles, and grades structured labels and proof chains;
 - OIBlogScore receives neutral evidence only and independently reviews a fixed article version.
 
 See [architecture](docs/architecture.md), [implementation plan](docs/implementation-plan.md), [dynamic workflows](docs/workflows.md), and the [pre-implementation research audit](docs/research-audit.md).
@@ -77,14 +77,18 @@ Commands are argv arrays (no shell). The generator receives `OISOLVER_SEED` and 
 oisolver difftest --config config.json
 ```
 
-The report records environment, commands, base and per-case seed, trial count, failure bytes, both outputs, replay artifacts, and a deterministic accept/reject shrink trace. Automatic generic or domain-aware shrinking runs only with a configured validator; every proposal must be legal and reproduce the mismatch. Built-in canonical adapters cover weighted trees, constrained graphs, and prerequisite-bearing operation sequences. See the [protocol](skills/oi-problem-solver/references/differential-testing.md) and [reproducible interactive/tree examples](docs/v2-reproducible-examples.md).
+The report records environment, commands, base and per-case seed, trial count, failure bytes, both outputs, replay artifacts, and a deterministic accept/reject shrink trace. Automatic generic or structural shrinking runs only with a configured validator; every proposal must be legal and reproduce the mismatch. V3's concise `shrink.adapter` schema maps counted or single 0/1-indexed inputs—including reordered weighted/unweighted tree/graph edges, mixed-arity operations, and grids/matrices—to the existing V2 shrinkers. Counted cases can be removed and then minimized independently. See the [protocol](skills/oi-problem-solver/references/differential-testing.md) and [V3 reproducible examples](docs/v3-reproducible-examples.md).
 
-## V2 execution, interactive, and C++ patch diagnostics
+## V3 compiler, repair-workflow, and C++ patch diagnostics
 
 ```sh
-# ASan/UBSan plus optional Linux hard memory/stack limits
+# Probe g++/clang++ by actually compiling and running ASan+UBSan;
+# Clang JSON AST support is tested only when clang++ exists.
+oisolver compiler-capabilities --output compiler-capabilities.json
+
+# Auto prefers a compiler that passed the probe and fails closed otherwise.
 oisolver diagnose-cpp --source solution.cpp --input failing.in \
-  --memory-mib 512 --stack-mib 64 --output diagnosis.json
+  --compiler auto --memory-mib 512 --stack-mib 64 --output diagnosis.json
 
 # Two-process Candidate ↔ Interactor transcript and first protocol failure
 oisolver interactive --config interactive.json
@@ -92,9 +96,18 @@ oisolver interactive --config interactive.json
 # Token/structure/line/style preservation; authorized change is explicit
 oisolver style --before original.cpp --after fixed.cpp \
   --expected-replacement upper_bound=lower_bound --output style.json
+
+# Reproduce the 12-sample threshold calibration report.
+oisolver style-calibrate \
+  --corpus tests/fixtures/style-calibration/corpus.json \
+  --output style-calibration.json
+
+# Scaffold once, then one run verifies the ordered Debug → shrink → patch chain.
+oisolver repair init --statement statement.md --source wa.cpp --output repair.json
+oisolver repair run --config repair.json
 ```
 
-Sanitizer classes remain specific UB/OOB/overflow evidence. Native rlimits do not isolate filesystem or network; the optional bubblewrap backend fails closed when unavailable. Interactive output includes ordered traffic, seed, limits, first failure, and transcript hash. Style metrics warn about gratuitous renaming, macro/fast-I/O removal, global-array-to-vector rewrites, indentation churn, and unrelated changed lines; they do not prove semantic equivalence.
+Sanitizer classes remain specific UB/OOB/overflow evidence. Missing compilers or incompatible sanitizers stop diagnostics fail-closed; absence of optional Clang is recorded as `DEGRADED`, never silently treated as AST verification. Native rlimits do not isolate filesystem or network. Interactive output includes ordered traffic, seed, limits, first failure, and transcript hash. The style threshold is calibrated on 12 labeled realistic repairs (compact/expanded layout, `#define int long long`, arrays/vectors, fast input, and bitwise idioms). The repair workflow validates the required Debug order, reproduces the original diagnostic mismatch, shrinks it under validator+mismatch guards, reruns identical seeds on the patch, and applies sanitizer/style gates; algorithm correctness remains `UNRESOLVED` without a separate proof.
 
 ## Evidence records and OIBlogScore
 
@@ -121,7 +134,7 @@ PYTHONPATH=src python -m oisolver.cli eval prepare \
   --output /tmp/oisolver-blind
 ```
 
-Reference-answer conformance validates the grader, **not Agent ability**. V2 can create deterministic ZIP archives that omit keys, references, results, and tests, and prepares matched fixed-model Baseline-vs-Skill arms:
+Reference-answer conformance validates the grader, **not Agent ability**. V3 retains V2's deterministic ZIP archives that omit keys, references, results, and tests, and prepares matched fixed-model Baseline-vs-Skill arms:
 
 ```sh
 PYTHONPATH=src python -m oisolver.cli eval isolate \
@@ -138,7 +151,7 @@ PYTHONPATH=src python -m oisolver.cli eval compare \
   --baseline-answers /isolated/baseline.json --skill-answers /isolated/skill.json
 ```
 
-A genuinely blind run must execute those archives where the controller checkout cannot be mounted, with the same model/build/settings and independent mathematical review. No real model comparison is claimed in this repository run. See [evaluation methodology](docs/evaluation.md) and [executed results](docs/evaluation-results.md).
+A genuinely blind run must execute those archives where the controller checkout cannot be mounted, with the same model/build/settings and independent mathematical review. No model entry point exists in the recorded V3 environment, so the real 12-case comparison is explicitly `UNRESOLVED / executed=false`; null metrics and infrastructure attribution are retained in `evaluation/results/2026-11-21/v3-live-model-experiment-status.json`. See [evaluation methodology](docs/evaluation.md) and [executed results](docs/evaluation-results.md).
 
 ## Repository structure
 

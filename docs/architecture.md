@@ -1,4 +1,4 @@
-# OISolver V2 架构
+# OISolver V3 架构
 
 ## 总览
 
@@ -21,7 +21,7 @@ oi-problem-solver/SKILL.md ── 动态路由、授权边界、五态结论
       ▼              ▼
 CPscore Catalog   确定性工具层 (src/oisolver)
 唯一 identity     catalog / records / process / differential / evaluation
-source            domain shrinkers / experiment / style / interop / CLI
+source            domain shrinkers / input adapters / workflow / experiment / style / CLI
       │              │
       └────证据与来源┘
                      │
@@ -39,16 +39,18 @@ Agent 负责语义：题意、原思路、证明、反例解释、代码映射�
 
 CLI 不自动下载知识、不调用模型、不修改用户源码，也不把测试／Sanitizer／结构检查称为证明。CPscore 的原生 `catalog.py + catalog.json` 是唯一算法身份源；本仓库只保存外键 overlay。OIBlogScore 不继承 solver verdict。
 
-## V2 模块
+## V2 基础与 V3 增量模块
 
 - `catalog.py`：只读委派真实 CPscore，返回 data/script hash 与 revision，按稳定外键拼 overlay。
 - `records.py`：五态、证据执行状态、claim dependency、授权路径和 `logical-gap` 精确 scope。
 - `domain_shrinkers.py`：canonical weighted tree、constrained graph、operation sequence 的 parse/validate/render/proposal。
-- `differential.py`：seeded generation、独立 candidate/oracle、原失败持久化、每个 proposal 的 validator+mismatch gate、完整 trace 与最终复验。
-- `process.py`：无 shell argv、timeout/output cap、Linux memory/stack hard limit、sanitizer classification、optional bwrap、Candidate↔Interactor 双进程 chronology。
+- `differential.py`：seeded generation、独立 candidate/oracle、原失败持久化、每个 proposal 的 validator+mismatch gate、完整 trace 与最终复验；V3 接入声明式 adapter 而不重建 shrinker。
+- `input_adapters.py`：single/counted、0/1 下标、非 canonical tree/graph、grid/matrix、mixed-arity operation 的显式 parse/render 映射与逐 case shrink；错拼字段 fail closed。
+- `process.py`：无 shell argv、timeout/output cap、Linux memory/stack hard limit、sanitizer classification、optional bwrap、Candidate↔Interactor 双进程 chronology；V3 实际 probe g++/clang++、ASan+UBSan 和 optional Clang JSON AST capability。
+- `workflow.py`：不修改源码的机械编排；验证渐进 Debug 顺序，复现原差异，运行 guarded shrink、patched regression、Sanitizer 与 style gate，算法结论保持独立。
 - `evaluation.py`：scenario grading、atomic proof chain、OI proof-gap probes、targeted counterexample suggestions；不证明自然语言真伪。
 - `experiment.py`：deterministic key-free ZIP/verifier、matching baseline/Skill arms、fixed-model contract 与五类比较指标。
-- `style.py`：token/structural tree/optional clang AST、changed-line 与 identifiers/macros/indent/blank/fast-I/O/global-array retention。
+- `style.py`：token/structural tree/optional clang AST、changed-line 与 identifiers/macros/indent/blank/fast-I/O/global-array retention；V3 用 12 个标注 OI patch 做 threshold sweep 和 false-positive/negative 报告。
 - `interop.py`：向 OIBlogScore 只导出可复核线索，不转 verdict、分数或修改权限。
 - `cli.py`：上述确定性能力的稳定入口。
 
@@ -60,4 +62,4 @@ CLI 不自动下载知识、不调用模型、不修改用户源码，也不把�
 
 ## Fail-closed 策略
 
-依赖缺失、schema 不兼容、未知 Catalog 外键、oracle/validator infrastructure failure、shrink 最终复验失败、proof chain 未闭合、bundle hash/path 违规、model/experiment 不匹配和请求的 sandbox 后端缺失都 fail closed。candidate 无差异只称 `PASS_WITHIN_TESTED_RANGE`；interactive 通过只称 `PASS_WITHIN_TESTED_INTERACTION`；OIBlog export 永不产生博客 verdict。
+依赖缺失、schema 不兼容／adapter 未知字段、未知 Catalog 外键、oracle/validator infrastructure failure、shrink 最终复验失败、proof chain 未闭合、bundle hash/path 违规、model/experiment 不匹配、无兼容 compiler/sanitizer 和请求的 sandbox 后端缺失都 fail closed。可选 clang 缺失只明确记 `DEGRADED`，不伪造 AST 成功。candidate 无差异只称 `PASS_WITHIN_TESTED_RANGE`；interactive 通过只称 `PASS_WITHIN_TESTED_INTERACTION`；OIBlog export 永不产生博客 verdict。

@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from .domain_shrinkers import DomainShrinkError, shrink_domain
+from .input_adapters import (InputAdapterError, shrink_adapted_input,
+                             validate_adapter_schema)
 from .process import CommandResult, run_command
 
 
@@ -41,6 +43,34 @@ def _strict_load(path: Path) -> Dict[str, Any]:
     return value
 
 
+def _adapter_schema(value: Any, config_path: Path) -> Optional[Dict[str, Any]]:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise DifferentialError("shrink.adapter must be an object")
+    if "schema_file" not in value:
+        schema = value
+    else:
+        if set(value) != {"schema_file"} or not isinstance(value["schema_file"], str):
+            raise DifferentialError(
+                "shrink.adapter schema_file form accepts only a string path"
+            )
+        try:
+            schema_path = (config_path.parent / value["schema_file"]).resolve(
+                strict=True
+            )
+        except OSError as exc:
+            raise DifferentialError(
+                "Cannot resolve adapter schema_file: {}".format(exc)
+            )
+        schema = _strict_load(schema_path)
+    try:
+        validate_adapter_schema(schema)
+    except InputAdapterError as exc:
+        raise DifferentialError("Input adapter schema: {}".format(exc))
+    return schema
+
+
 def _argv(value: Any, label: str) -> List[str]:
     if not isinstance(value, dict):
         raise DifferentialError("{} must be an object".format(label))
@@ -51,9 +81,14 @@ def _argv(value: Any, label: str) -> List[str]:
     return argv
 
 
-def _render(argv: Sequence[str], seed: int, iteration: int) -> List[str]:
-    return [arg.replace("{seed}", str(seed)).replace("{iteration}", str(iteration))
-            for arg in argv]
+def _render(argv: Sequence[str], seed: int, iteration: int,
+            placeholders: Optional[Dict[str, str]] = None) -> List[str]:
+    rendered = [arg.replace("{seed}", str(seed)).replace(
+        "{iteration}", str(iteration)
+    ) for arg in argv]
+    for name, value in (placeholders or {}).items():
+        rendered = [item.replace("{" + name + "}", value) for item in rendered]
+    return rendered
 
 
 def _same(left: bytes, right: bytes, mode: str) -> bool:
@@ -201,7 +236,8 @@ def _shrink(data: bytes, units: Sequence[str], validator_argv: Sequence[str],
             candidate_argv: Sequence[str], oracle_argv: Sequence[str], cwd: Path,
             timeout: float, environment: Dict[str, str], max_output: int,
             comparison: str, max_attempts: int,
-            domain: Optional[Dict[str, Any]] = None) -> Tuple[bytes, Dict[str, Any]]:
+            domain: Optional[Dict[str, Any]] = None,
+            adapter: Optional[Dict[str, Any]] = None) -> Tuple[bytes, Dict[str, Any]]:
     session = _ShrinkSession(validator_argv, candidate_argv, oracle_argv, cwd,
                              timeout, environment, max_output, comparison,
                              max_attempts)
@@ -212,7 +248,17 @@ def _shrink(data: bytes, units: Sequence[str], validator_argv: Sequence[str],
         "legality_validator": list(validator_argv),
     }
     current = data
-    if domain is not None:
+    if domain is not None and adapter is not None:
+        raise DifferentialError("shrink.domain and shrink.adapter are mutually exclusive")
+    if adapter is not None:
+        try:
+            current, adapter_stats = shrink_adapted_input(
+                current, adapter, session.attempt, session.can_attempt
+            )
+        except InputAdapterError as exc:
+            raise DifferentialError("Input adapter: {}".format(exc))
+        stats["adapter"] = adapter_stats
+    elif domain is not None:
         try:
             current, domain_stats = shrink_domain(
                 current, domain, session.attempt, session.can_attempt
@@ -289,7 +335,18 @@ def _shrink(data: bytes, units: Sequence[str], validator_argv: Sequence[str],
     return current, stats
 
 
-def run_config(config_path: Path) -> Tuple[int, Dict[str, Any]]:
+def run_config(config_path: Path,
+               command_placeholders: Optional[Dict[str, str]] = None,
+               output_dir_override: Optional[Path] = None) -> Tuple[int, Dict[str, Any]]:
+    if command_placeholders is None:
+        command_placeholders = {}
+    if (not isinstance(command_placeholders, dict)
+            or any(not isinstance(key, str) or not key
+                   or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key)
+                   or key in ("seed", "iteration")
+                   or not isinstance(value, str) or not value
+                   for key, value in command_placeholders.items())):
+        raise DifferentialError("command_placeholders must map safe names to strings")
     config_path = config_path.resolve(strict=True)
     config = _strict_load(config_path)
     if config.get("schema_version") != 1:
@@ -313,6 +370,21 @@ def run_config(config_path: Path) -> Tuple[int, Dict[str, Any]]:
         raise DifferentialError("max_input_bytes and max_output_bytes must be positive integers")
     if comparison not in ("exact", "tokens", "lines"):
         raise DifferentialError("comparison must be exact, tokens, or lines")
+    configured_adapter: Optional[Dict[str, Any]] = None
+    shrink_config = config.get("shrink")
+    if shrink_config is not None:
+        if not isinstance(shrink_config, dict):
+            raise DifferentialError("shrink must be an object")
+        configured_adapter = _adapter_schema(
+            shrink_config.get("adapter"), config_path
+        )
+        configured_domain = shrink_config.get("domain")
+        if configured_domain is not None and not isinstance(configured_domain, dict):
+            raise DifferentialError("shrink.domain must be an object")
+        if configured_domain is not None and configured_adapter is not None:
+            raise DifferentialError(
+                "shrink.domain and shrink.adapter are mutually exclusive"
+            )
     environment = config.get("environment", {})
     if not isinstance(environment, dict) or any(not isinstance(k, str) or not isinstance(v, str)
                                                 for k, v in environment.items()):
@@ -329,7 +401,10 @@ def run_config(config_path: Path) -> Tuple[int, Dict[str, Any]]:
     output_value = config.get("output_dir", ".oisolver/difftest")
     if not isinstance(output_value, str):
         raise DifferentialError("output_dir must be a string")
-    output_root = (config_path.parent / output_value).resolve()
+    if output_dir_override is None:
+        output_root = (config_path.parent / output_value).resolve()
+    else:
+        output_root = output_dir_override.resolve()
     output_root.mkdir(parents=True, exist_ok=True)
 
     started = datetime.now(timezone.utc).isoformat()
@@ -356,6 +431,7 @@ def run_config(config_path: Path) -> Tuple[int, Dict[str, Any]]:
             "candidate": candidate_argv,
             "oracle": oracle_argv,
         },
+        "command_placeholder_names": sorted(command_placeholders),
     }
     rng = random.Random(seed)
     for iteration in range(trials):
@@ -366,7 +442,8 @@ def run_config(config_path: Path) -> Tuple[int, Dict[str, Any]]:
             "OISOLVER_ITERATION": str(iteration),
         })
         generator = run_command(
-            _render(generator_argv, case_seed, iteration), cwd, b"", timeout,
+            _render(generator_argv, case_seed, iteration, command_placeholders),
+            cwd, b"", timeout,
             command_environment, max_output
         )
         report["trials_run"] = iteration + 1
@@ -389,8 +466,12 @@ def run_config(config_path: Path) -> Tuple[int, Dict[str, Any]]:
             })
             _atomic_json(output_root / "last-report.json", report)
             return 2, report
-        candidate_rendered = _render(candidate_argv, case_seed, iteration)
-        oracle_rendered = _render(oracle_argv, case_seed, iteration)
+        candidate_rendered = _render(
+            candidate_argv, case_seed, iteration, command_placeholders
+        )
+        oracle_rendered = _render(
+            oracle_argv, case_seed, iteration, command_placeholders
+        )
         state, candidate, oracle = _run_pair(
             candidate_rendered, oracle_rendered, cwd, data, timeout,
             command_environment, max_output, comparison
@@ -435,16 +516,24 @@ def run_config(config_path: Path) -> Tuple[int, Dict[str, Any]]:
                             "reason": "No legality validator was configured; unvalidated shrinking is forbidden."
                         }
                     else:
-                        validator_argv = _render(_argv(shrink["validator"], "shrink.validator"),
-                                                 case_seed, iteration)
+                        validator_argv = _render(
+                            _argv(shrink["validator"], "shrink.validator"),
+                            case_seed, iteration, command_placeholders,
+                        )
                         domain = shrink.get("domain")
                         if domain is not None and not isinstance(domain, dict):
                             raise DifferentialError("shrink.domain must be an object")
+                        adapter = configured_adapter
+                        if domain is not None and adapter is not None:
+                            raise DifferentialError(
+                                "shrink.domain and shrink.adapter are mutually exclusive"
+                            )
+                        structural = domain is not None or adapter is not None
                         units = shrink.get(
-                            "units", [] if domain is not None else ["lines", "tokens", "integers"]
+                            "units", [] if structural else ["lines", "tokens", "integers"]
                         )
                         if (not isinstance(units, list)
-                                or (not units and domain is None)
+                                or (not units and not structural)
                                 or any(unit not in ("lines", "tokens", "integers")
                                        for unit in units)):
                             raise DifferentialError("shrink.units contains an unsupported unit")
@@ -454,7 +543,7 @@ def run_config(config_path: Path) -> Tuple[int, Dict[str, Any]]:
                         minimized, shrink_report = _shrink(
                             data, units, validator_argv, candidate_rendered,
                             oracle_rendered, cwd, timeout, command_environment,
-                            max_output, comparison, max_attempts, domain
+                            max_output, comparison, max_attempts, domain, adapter
                         )
                         (failure_dir / "minimized-input.txt").write_bytes(minimized)
                         trace = shrink_report.pop("trace")

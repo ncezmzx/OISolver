@@ -1,0 +1,306 @@
+{
+  "acceptable_samples": 9,
+  "calibration_passed": true,
+  "claim_boundary": "The threshold is calibrated only to these labeled syntactic repair samples; style scoring does not establish semantic correctness or necessity.",
+  "claim_status": "TESTED_ONLY",
+  "corpus": "tests/fixtures/style-calibration/corpus.json",
+  "corpus_and_sources_sha256": "19c01762e6cd95b39106f8685e1f2541015e4b7264dd3f5e9307c7a2344be894",
+  "corpus_sha256": "8f7999952b030d73e979566ac0258242a139b37292878c6bc3f4b12472fd6f7a",
+  "declared_production_threshold": 0.1,
+  "missing_tags": [],
+  "observed_tags": [
+    "bitwise-idiom",
+    "compact-formatting",
+    "define-int-long-long",
+    "expanded-formatting",
+    "fast-io",
+    "global-array",
+    "vector"
+  ],
+  "required_tags": [
+    "compact-formatting",
+    "expanded-formatting",
+    "define-int-long-long",
+    "global-array",
+    "vector",
+    "fast-io",
+    "bitwise-idiom"
+  ],
+  "required_warnings_present": true,
+  "samples": 12,
+  "schema_version": 1,
+  "selected_samples": [
+    {
+      "acceptable": true,
+      "after": "p01-compact-macro-array.after.cpp",
+      "after_sha256": "ae1edcc9e6479823190da23f6fe32987e94d3461591f994c1357764e06a9d2dd",
+      "before": "p01-compact-macro-array.before.cpp",
+      "before_sha256": "df87b0ca744dcd4519fceb55009c975a565735d57d9f98c9a1ef53a2aee1b3d3",
+      "gate_passed": true,
+      "id": "compact-macro-global-array-lis",
+      "nonessential_change_rate": 0.0,
+      "required_warnings_present": true,
+      "score": 99.487,
+      "tags": [
+        "compact-formatting",
+        "define-int-long-long",
+        "global-array",
+        "vector",
+        "fast-io"
+      ],
+      "warning_codes": []
+    },
+    {
+      "acceptable": true,
+      "after": "p02-expanded-vector.after.cpp",
+      "after_sha256": "feaa6639eb877d69149bc28fb2e9dc7ec39e5d843baa4bd387622785e0457524",
+      "before": "p02-expanded-vector.before.cpp",
+      "before_sha256": "f28e0cec5826d61a535056cc63909989cdd77b12d32c2e97124226d316a4c381",
+      "gate_passed": true,
+      "id": "expanded-vector-loop-bound",
+      "nonessential_change_rate": 0.0,
+      "required_warnings_present": true,
+      "score": 99.734,
+      "tags": [
+        "expanded-formatting",
+        "vector",
+        "fast-io"
+      ],
+      "warning_codes": []
+    },
+    {
+      "acceptable": true,
+      "after": "p03-bitwise-idiom.after.cpp",
+      "after_sha256": "1166519c83cc9e17b8a980851a14f90ef31fdd7e33c6527973390bd76ce6031c",
+      "before": "p03-bitwise-idiom.before.cpp",
+      "before_sha256": "c13af689ec2f0068afda4315aed63b12cead06ba29aa3bb76f32f1ad27e38336",
+      "gate_passed": true,
+      "id": "compact-bitwise-parentheses",
+      "nonessential_change_rate": 0.0,
+      "required_warnings_present": true,
+      "score": 98.113,
+      "tags": [
+        "compact-formatting",
+        "bitwise-idiom"
+      ],
+      "warning_codes": []
+    },
+    {
+      "acceptable": true,
+      "after": "p04-scanf-global.after.cpp",
+      "after_sha256": "e76cd984492573365572737a370ef55ce2bae52980f87b14c6a2a3ad98e94f2a",
+      "before": "p04-scanf-global.before.cpp",
+      "before_sha256": "49fe207bb7eca679bb1754e27062fe05b1eda93a645ccf8d236a68f9f097dae1",
+      "gate_passed": true,
+      "id": "scanf-global-array-bound",
+      "nonessential_change_rate": 0.0,
+      "required_warnings_present": true,
+      "score": 99.632,
+      "tags": [
+        "expanded-formatting",
+        "global-array",
+        "fast-io"
+      ],
+      "warning_codes": []
+    },
+    {
+      "acceptable": true,
+      "after": "p05-getchar-reader.after.cpp",
+      "after_sha256": "6ee4ecd78a3ca5441b20b7cde60874d6d382800935db114c1e9185a74da54947",
+      "before": "p05-getchar-reader.before.cpp",
+      "before_sha256": "b6e401146c521d052fd7e3a4dba160988f9eb98fbf81b859403371cf13bbfce9",
+      "gate_passed": true,
+      "id": "getchar-reader-sign",
+      "nonessential_change_rate": 0.0,
+      "required_warnings_present": true,
+      "score": 99.775,
+      "tags": [
+        "compact-formatting",
+        "fast-io"
+      ],
+      "warning_codes": []
+    },
+    {
+      "acceptable": true,
+      "after": "p06-global-vectors.after.cpp",
+      "after_sha256": "eedbf0ce57fc42fd830467bbb8a2d0ea3d594b97168baf39d513ede048a70a40",
+      "before": "p06-global-vectors.before.cpp",
+      "before_sha256": "fd5d09dca0af7ca046a77c7f7deed5dd781b31165230be30ac5377546f8a23a2",
+      "gate_passed": true,
+      "id": "global-vector-tree-endpoint",
+      "nonessential_change_rate": 0.0,
+      "required_warnings_present": true,
+      "score": 99.764,
+      "tags": [
+        "compact-formatting",
+        "vector",
+        "fast-io"
+      ],
+      "warning_codes": []
+    },
+    {
+      "acceptable": true,
+      "after": "p07-prefix-boundary.after.cpp",
+      "after_sha256": "2d6184ac8deb22e23afef2420ce736ef1d5380a8f34fa0004e56ae788b41a2cf",
+      "before": "p07-prefix-boundary.before.cpp",
+      "before_sha256": "a9bac2a05fcfb4f28a2e21217db300f8d6a6e777df47b2335425ad1fb11a814b",
+      "gate_passed": true,
+      "id": "prefix-query-boundary",
+      "nonessential_change_rate": 0.0,
+      "required_warnings_present": true,
+      "score": 99.296,
+      "tags": [
+        "expanded-formatting",
+        "global-array"
+      ],
+      "warning_codes": []
+    },
+    {
+      "acceptable": true,
+      "after": "p08-small-comment.after.cpp",
+      "after_sha256": "8af79ad429f577b3f600f9416edd00d11b85f8b51ea1b35bbe6769dd06351ea6",
+      "before": "p08-small-comment.before.cpp",
+      "before_sha256": "6575a881223429fbfb0ea5a28d0abd05f9d58b57f52e59d90b7b7d4b2b94bd0e",
+      "gate_passed": true,
+      "id": "small-explanatory-comment",
+      "nonessential_change_rate": 0.06666666666666667,
+      "required_warnings_present": true,
+      "score": 98.315,
+      "tags": [
+        "expanded-formatting",
+        "fast-io"
+      ],
+      "warning_codes": []
+    },
+    {
+      "acceptable": true,
+      "after": "p09-safe-mid-macro.after.cpp",
+      "after_sha256": "d337a014c9cb882b4278c85df35f6af64ff3f8ffb936e3a99372a2ee53be4e1b",
+      "before": "p09-safe-mid-macro.before.cpp",
+      "before_sha256": "0ce9fec41709cbc3d76066e17fc7fbe39e6ca2ae66e98b2251e763f7fc266ac1",
+      "gate_passed": true,
+      "id": "safe-mid-preserves-int-macro",
+      "nonessential_change_rate": 0.0,
+      "required_warnings_present": true,
+      "score": 99.306,
+      "tags": [
+        "compact-formatting",
+        "define-int-long-long",
+        "global-array",
+        "fast-io"
+      ],
+      "warning_codes": []
+    },
+    {
+      "acceptable": false,
+      "after": "n01-destructive-modernize.after.cpp",
+      "after_sha256": "5aac02d73465774768d4f561424240580a528e786e25f1bd594d80efe7d09d72",
+      "before": "n01-destructive-modernize.before.cpp",
+      "before_sha256": "7551d7f4d86ea47e7469c02068e1a8a144daf8ed69a9586c270e892ad928ef49",
+      "gate_passed": false,
+      "id": "destructive-modernization",
+      "nonessential_change_rate": 0.8,
+      "required_warnings_present": true,
+      "score": 36.013,
+      "tags": [
+        "compact-formatting",
+        "define-int-long-long",
+        "global-array",
+        "vector",
+        "fast-io"
+      ],
+      "warning_codes": [
+        "FAST_IO_REMOVED",
+        "GLOBAL_ARRAY_REPLACED_BY_VECTOR",
+        "IDENTIFIERS_NOT_PRESERVED",
+        "MACRO_CHANGED_OR_REMOVED",
+        "NONESSENTIAL_LINE_CHANGES",
+        "VARIABLE_NAMES_NOT_PRESERVED"
+      ]
+    },
+    {
+      "acceptable": false,
+      "after": "n02-unrelated-edits.after.cpp",
+      "after_sha256": "eb7d098cc576d7d9caf9ae2448e1dbe36e02b51e5dc58879e232cd4b8c27843f",
+      "before": "n02-unrelated-edits.before.cpp",
+      "before_sha256": "2f25de56a1f0e890160e77b28b1221663e4470574115b1e2498daae1548fac27",
+      "gate_passed": false,
+      "id": "core-fix-plus-unrelated-edits",
+      "nonessential_change_rate": 0.14285714285714285,
+      "required_warnings_present": true,
+      "score": 95.776,
+      "tags": [
+        "expanded-formatting",
+        "vector",
+        "fast-io"
+      ],
+      "warning_codes": [
+        "NONESSENTIAL_LINE_CHANGES"
+      ]
+    },
+    {
+      "acceptable": false,
+      "after": "n03-fast-io-rename.after.cpp",
+      "after_sha256": "db3c05d59e85248140a9b968933e828c9acf4e506f6743f016473c13f76ec8bc",
+      "before": "n03-fast-io-rename.before.cpp",
+      "before_sha256": "d6b0b382d1757b1922231610bdd75903ec7aab6963dd46259fea22cf42d42554",
+      "gate_passed": false,
+      "id": "rename-and-remove-fast-io",
+      "nonessential_change_rate": 0.6363636363636364,
+      "required_warnings_present": true,
+      "score": 61.241,
+      "tags": [
+        "expanded-formatting",
+        "vector",
+        "fast-io"
+      ],
+      "warning_codes": [
+        "FAST_IO_REMOVED",
+        "IDENTIFIERS_NOT_PRESERVED",
+        "NONESSENTIAL_LINE_CHANGES",
+        "VARIABLE_NAMES_NOT_PRESERVED"
+      ]
+    }
+  ],
+  "selected_threshold": 0.1,
+  "status": "PASS",
+  "threshold_sweep": [
+    {
+      "acceptable_total": 9,
+      "false_negative_count": 0,
+      "false_negative_rate": 0.0,
+      "false_positive_count": 1,
+      "false_positive_rate": 0.1111111111111111,
+      "threshold": 0.05,
+      "unacceptable_total": 3
+    },
+    {
+      "acceptable_total": 9,
+      "false_negative_count": 0,
+      "false_negative_rate": 0.0,
+      "false_positive_count": 0,
+      "false_positive_rate": 0.0,
+      "threshold": 0.1,
+      "unacceptable_total": 3
+    },
+    {
+      "acceptable_total": 9,
+      "false_negative_count": 1,
+      "false_negative_rate": 0.3333333333333333,
+      "false_positive_count": 0,
+      "false_positive_rate": 0.0,
+      "threshold": 0.15,
+      "unacceptable_total": 3
+    },
+    {
+      "acceptable_total": 9,
+      "false_negative_count": 1,
+      "false_negative_rate": 0.3333333333333333,
+      "false_positive_count": 0,
+      "false_positive_rate": 0.0,
+      "threshold": 0.2,
+      "unacceptable_total": 3
+    }
+  ],
+  "unacceptable_samples": 3
+}

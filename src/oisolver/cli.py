@@ -11,10 +11,12 @@ from .evaluation import EvaluationError, grade, prepare_blind
 from .experiment import (compare_experiment, prepare_controlled_experiment,
                          prepare_isolated_bundle, verify_isolated_bundle)
 from .interop import export_oiblog_evidence
-from .process import (ResourceLimits, SandboxPolicy, diagnose_cpp,
-                      run_interactive_config)
+from .process import (ResourceLimits, SandboxPolicy, compiler_capabilities,
+                      diagnose_cpp, run_interactive_config)
 from .records import RecordError, load_and_validate, validate_record
-from .style import StyleError, evaluate_cpp_files
+from .style import StyleError, calibrate_cpp_style, evaluate_cpp_files
+from .workflow import (WorkflowError, prepare_repair_workflow,
+                       run_repair_workflow)
 
 
 def _emit(value: Any) -> None:
@@ -50,7 +52,8 @@ def parser() -> argparse.ArgumentParser:
     diagnostic.add_argument("--source", required=True, type=Path)
     diagnostic.add_argument("--cwd", type=Path, default=Path("."))
     diagnostic.add_argument("--input", type=Path)
-    diagnostic.add_argument("--compiler", default="g++")
+    diagnostic.add_argument("--compiler", default="auto",
+                            help="compiler path/name, or auto (prefer compatible clang++)")
     diagnostic.add_argument("--standard", default="c++17")
     diagnostic.add_argument("--timeout", type=float, default=3.0)
     diagnostic.add_argument("--memory-mib", type=int)
@@ -59,6 +62,15 @@ def parser() -> argparse.ArgumentParser:
     diagnostic.add_argument("--allow-network", action="store_true")
     diagnostic.add_argument("--output", type=Path)
 
+    capabilities = commands.add_parser(
+        "compiler-capabilities",
+        help="probe C++17, ASan/UBSan, and optional Clang JSON AST support",
+    )
+    capabilities.add_argument("--compiler", action="append", dest="compilers")
+    capabilities.add_argument("--standard", default="c++17")
+    capabilities.add_argument("--timeout", type=float, default=15.0)
+    capabilities.add_argument("--output", type=Path)
+
     style = commands.add_parser("style", help="score C++ patch minimality and style preservation")
     style.add_argument("--before", required=True, type=Path)
     style.add_argument("--after", required=True, type=Path)
@@ -66,6 +78,29 @@ def parser() -> argparse.ArgumentParser:
     style.add_argument("--clang")
     style.add_argument("--max-nonessential-line-rate", type=float, default=0.10)
     style.add_argument("--output", type=Path)
+
+    calibration = commands.add_parser(
+        "style-calibrate",
+        help="calibrate the style gate against a labeled OI repair corpus",
+    )
+    calibration.add_argument("--corpus", required=True, type=Path)
+    calibration.add_argument("--clang")
+    calibration.add_argument("--output", type=Path)
+
+    repair = commands.add_parser(
+        "repair", help="scaffold or run the progressive C++ repair evidence chain"
+    )
+    repair_commands = repair.add_subparsers(dest="repair_command", required=True)
+    repair_init = repair_commands.add_parser(
+        "init", help="create a fail-closed repair workflow scaffold"
+    )
+    repair_init.add_argument("--statement", required=True, type=Path)
+    repair_init.add_argument("--source", required=True, type=Path)
+    repair_init.add_argument("--output", required=True, type=Path)
+    repair_run = repair_commands.add_parser(
+        "run", help="run Debug, guarded difftest, regression, and style gates"
+    )
+    repair_run.add_argument("--config", required=True, type=Path)
 
     record = commands.add_parser("validate-record", help="validate evidence/status consistency")
     record.add_argument("record", type=Path)
@@ -158,6 +193,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             )
             _write_or_emit(report, args.output)
             return 0 if report["status"] == "PASS_WITHIN_TESTED_EXECUTION" else 1
+        if args.command == "compiler-capabilities":
+            report = compiler_capabilities(
+                tuple(args.compilers or ("clang++", "g++")),
+                args.standard,
+                args.timeout,
+            )
+            _write_or_emit(report, args.output)
+            return 1 if report["status"] == "UNAVAILABLE" else 0
         if args.command == "style":
             replacements = []
             for value in args.expected_replacement:
@@ -173,6 +216,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             )
             _write_or_emit(report, args.output)
             return 0 if report["gate_passed"] else 1
+        if args.command == "style-calibrate":
+            report = calibrate_cpp_style(args.corpus, args.clang)
+            _write_or_emit(report, args.output)
+            return 0 if report["calibration_passed"] else 1
+        if args.command == "repair" and args.repair_command == "init":
+            _emit(prepare_repair_workflow(
+                args.statement, args.source, args.output
+            ))
+            return 0
+        if args.command == "repair" and args.repair_command == "run":
+            exit_code, report = run_repair_workflow(args.config)
+            _emit(report)
+            return exit_code
         if args.command == "validate-record":
             value = load_and_validate(args.record)
             _emit(validate_record(value))
@@ -223,7 +279,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             return 0
         raise ValueError("Unhandled command")
     except (CatalogError, DifferentialError, EvaluationError, RecordError,
-            StyleError, OSError, ValueError, KeyError, TypeError) as exc:
+            StyleError, WorkflowError, OSError, ValueError, KeyError, TypeError) as exc:
         print("oisolver: {}".format(exc), file=sys.stderr)
         return 2
 
