@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+# Differential-testing outputs are evidence artifacts, not source.
+.oisolver/
+evaluation/bundles/
+tests/fixtures/difftest-tree/output/
+tests/fixtures/difftest-adapter-tree/output/
+tests/fixtures/interactive/output/
+tests/fixtures/repair-workflow/workflow-output/

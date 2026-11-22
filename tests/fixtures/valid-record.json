@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "task": {
+    "id": "strict-lis-debug",
+    "request": "Find a counterexample and only modify solve().",
+    "scope": {
+      "authorized_paths": ["solution.cpp"],
+      "edit_mode": "function-only"
+    }
+  },
+  "problem": {
+    "explicit_facts": ["The subsequence must be strictly increasing.", "Equal values are allowed in the input."],
+    "derived_facts": ["Equal adjacent selected values are forbidden."],
+    "assumptions": [],
+    "unknowns": []
+  },
+  "tests": [
+    {
+      "id": "random-diff-1",
+      "kind": "random",
+      "executed": true,
+      "command": ["python3", "runner.py"],
+      "environment": {"python": "3.x", "platform": "test fixture"},
+      "result": "fail",
+      "cases": 1,
+      "seed": 20261121
+    }
+  ],
+  "claims": [
+    {
+      "id": "upper-bound-wrong",
+      "statement": "upper_bound correctly performs strict LIS tails replacement.",
+      "status": "REFUTED",
+      "conditions": [],
+      "depends_on": [],
+      "evidence": [
+        {"type": "counterexample", "summary": "For [1,1], upper_bound appends twice and returns 2, while the strict LIS is 1."},
+        {"type": "executed-test", "test_id": "random-diff-1", "summary": "The saved run reproduced the discrepancy."}
+      ]
+    },
+    {
+      "id": "finite-run",
+      "statement": "No other mismatch was found in the stated run after the fix.",
+      "status": "TESTED_ONLY",
+      "conditions": [],
+      "depends_on": [],
+      "evidence": [
+        {"type": "executed-test", "test_id": "random-diff-1", "summary": "The fixture records an actual bounded execution."}
+      ]
+    },
+    {
+      "id": "lower-bound-duplicate",
+      "statement": "Replacing the first tails value not smaller than x prevents equal x from increasing the tails length.",
+      "status": "PROVED",
+      "conditions": [],
+      "depends_on": [],
+      "evidence": [
+        {"type": "invariant-proof", "summary": "tails[k] remains the minimum ending value for a strict subsequence of length k+1; lower_bound preserves this invariant."}
+      ]
+    }
+  ],
+  "changes": [
+    {
+      "path": "solution.cpp",
+      "authorized": true,
+      "summary": "Replace upper_bound with lower_bound inside solve().",
+      "algorithm_changed": false,
+      "complexity_changed": false,
+      "validation": ["counterexample", "random-diff-1"]
+    }
+  ],
+  "catalog_usage": [
+    {
+      "algorithm_id": "oiwiki.dp.lis",
+      "catalog_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "independent_check": "REFUTED"
+    }
+  ]
+}

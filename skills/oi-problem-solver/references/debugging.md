@@ -1,0 +1,64 @@
+# 渐进式 Debug Protocol
+
+除非用户要求直说、完整修复或不要引导，默认按以下阶段推进。目标不仅是找到错行，还要让用户看到哪个不变量为何破坏。
+
+## Phase 1：建立模型
+
+还原程序意图、状态、数据结构、不变量、用户预期与理论算法。若理论本身未确定，先分离“思路错误”和“实现没有实现思路”。
+
+## Phase 2：构造诊断数据
+
+优先小、可手算、能隔离一个性质的数据。按错误机制选：严格／非严格用相等值；懒标记用两种操作顺序；持久化用分叉后读旧版本；多测用两组；溢出用最小越界值；递归用退化链。
+
+## Phase 3：先给正确结果
+
+展示测试输入、合法性、正确答案和必要推导。此阶段默认不公布具体错行，让用户有机会自行跟踪。
+
+## Phase 4：执行过程对照
+
+列足以定位首个偏离的状态，不倾倒全部日志。可展示递归区间、DP 行、节点值／标记、版本根、循环变量、中间答案。
+
+## Phase 5：揭示首个矛盾
+
+找最早时刻 `expected state != actual state`；后续错误先视为连锁表现。明确差异发生前哪些不变量仍成立。
+
+## Phase 6：根因
+
+说明被破坏的不变量、触发条件、代码为何漏处理、它属于理论还是实现，以及为什么样例可能没有触发。多个独立错误先修最早者后重新运行，不能一次罗列后假定全部独立。
+
+## Phase 7：最小修复
+
+只改恢复该不变量所需的最小表达式／分支／函数，保持原命名和结构。若外部设计阻止局部修复，先解释再请求扩大范围。
+
+## Phase 8：回归
+
+重跑原反例、最小边界、相邻正常例及针对同类错误的数据；适合时再做固定种子对拍和 Sanitizer。分别记录理论结论与实际运行结果。
+
+## Candidate↔Interactor 交互题
+
+使用独立双进程而不是把脚本拼成一条 shell。保存有严格序号、方向、原始行与 query 标记的 JSONL chronology，并记录 seed、query/step 上限、双方退出码、stderr 和 transcript hash。每条消息依次通过 allowed/forbidden regex；报告第一个非法 query／answer、EOF、超时、信号退出或 step-limit breach 的 `message_index`。只有 transcript 覆盖到的有限交互可标 `TESTED_ONLY`，不能据此证明任意对手策略下正确。
+
+## 反例缩小
+
+依次尝试减少 n/m、删除操作／边、减少不同值、缩小绝对值。每次候选都必须：
+
+1. 仍满足原题合法性；
+2. 独立 oracle 仍可计算；
+3. 待审程序仍产生同类差异；
+4. 重新保存输入和轨迹。
+
+没有合法性校验器时不自动宣称缩小结果合法，更不能称“最小”。“局部最小”需说明采用的删除／数值邻域；全局最小需要完整枚举依据。
+
+## V3 一键证据链
+
+当材料包含不完整题面、WA C++、可写独立 oracle/validator 且用户允许修复时，优先生成 `oisolver repair init` scaffold，再由 Agent 填入：四类事实台账、修改授权、诊断输入／正确输出、八阶段证据、最小 patched source、固定种子 difftest 配置和授权替换。填完后一次运行：
+
+```sh
+oisolver repair run --config repair.json
+```
+
+runtime 会强制阶段顺序 `model → diagnostic-input → correct-answer → trace → first-divergence → invariant-root-cause → minimal-fix → regression`，并执行 compiler/sanitizer probe、原程序诊断复现、validator+mismatch 守卫的发现与 shrink、相同 seed 的修复回归、patched sanitizer 和 style/minimal-patch gate。任何空证据、越权文件、无 sanitizer compiler、无合法 shrink 或回归差异都会 fail closed。该链减少命令胶水，但不会替 Agent 理解题意、证明 oracle、判断首个偏离或制作补丁；最终算法全范围正确性仍需单独证明，否则为 `UNRESOLVED`。
+
+## 用户直给模式
+
+用户明确要求错误位置、补丁或完整代码时，直接给根因和修复，不用教学节奏拖延；仍保留反例、首个偏离和验证结论。

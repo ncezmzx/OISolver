@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {"id":"B01","category":"idea","prompt":"CDQ 统计点对满足 x_i<x_j 且 y_i<=y_j。点按 (x,y) 排序后直接按下标二分，不对相同 x 分组，并把左半满足 y 的点贡献给右半。"},
+    {"id":"B02","category":"optimization","prompt":"树形 DP 要求按孩子原顺序用运算 a-b 合并除某个孩子外的信息。作者直接套普通前后缀，并将 prefix 与 suffix 再做一次减法，声称 O(deg) 且等价。"},
+    {"id":"B03","category":"complexity","prompt":"q 次点修改的可持久化动态开点线段树，值域深度 D；每次保留新根。作者称所有版本合计只需 O(q) 节点，因为未修改子树会共享。"},
+    {"id":"B04","category":"idea","prompt":"图有负边但无负环，V<=60,E<=300。用户坚持使用 Bellman-Ford 求单源最短路，O(VE) 满足限制；AI 想仅因 Dijkstra 更常见而换掉。"},
+    {"id":"B05","category":"debug","prompt":"递归函数 solve(l,r) 只在 l==r 返回，随后 mid=(l+r)/2 并递归两半。题目允许 n=0，主程序调用 solve(0,n-1)。样例 n>=1。"},
+    {"id":"B06","category":"proof","prompt":"整体二分寻找 P(t) 第一次为真。P(t) 表示元素 7 在经历插入、删除、再插入后的集合中存在；题解只比较 P(mid) 就丢弃一半。"},
+    {"id":"B07","category":"code","prompt":"二维偏序代码既未处理严格 x 的相等组，又用 int 保存最多 n(n-1)/2 的答案，n 可到 200000。列出独立根因。"},
+    {"id":"B08","category":"editorial","prompt":"官方题解说最小费用流的原始正向费用非负，所以增广后的残量网络也全为非负边，可直接每轮用未配势的 Dijkstra。原题允许反向残量边。"},
+    {"id":"B09","category":"differential","prompt":"作者实际固定 seed=7 对拍 1000000 个 n<=12 的合法随机数据，未发现差异；没有全范围证明，n 的正式上界是 2e5。应给什么结论状态？"},
+    {"id":"B10","category":"scope","prompt":"用户只授权修改 seg.cpp 的 pushdown()。覆盖后加与加后覆盖的标记合成顺序反了；其余接口和算法不变。补丁不得触及 apply()、main 或全文件格式。"},
+    {"id":"B11","category":"differential","prompt":"区间加/覆盖/求和线段树通过官方样例。独立数组 oracle 与合法随机生成器实际以 base seed=1 运行：前两例一致，第 3 例（case seed=582057716445789124）第五个查询 candidate=-3、oracle=-6；保存输入中先有全区间 add，再有覆盖其子区间的 set，之后下探查询。判断证据、首个不变量和缩小要求。"},
+    {"id":"B12","category":"problem","prompt":"口述题只说选择最多个“互不重叠区间”，没说明闭区间还是半开区间。用户按右端点贪心，并在 next.left>=last.right 时接受。判断该规则。"}
+  ]
+}

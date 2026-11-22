@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {"id":"G01","status":"REFUTED","defect":true,"required_findings":["missing-nonnegative-edge-premise"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"G02","status":"REFUTED","defect":true,"required_findings":["missing-no-solution-state"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"G03","status":"REFUTED","defect":true,"required_findings":["upper-bound-for-strict-lis"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"G04","status":"REFUTED","defect":true,"required_findings":["missing-log-factor"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"G05","status":"PROVED","defect":false,"required_findings":["heap-dijkstra-valid"],"forbidden_findings":["must-use-zero-one-bfs"],"optional_findings":[]},
+    {"id":"G06","status":"REFUTED","defect":true,"required_findings":["forward-loop-reuses-item"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"G07","status":"REFUTED","defect":true,"required_findings":["star-quadratic"],"forbidden_findings":[],"optional_findings":["prefix-suffix-option"]},
+    {"id":"G08","status":"REFUTED","defect":true,"required_findings":["multi-test-state-not-reset","multiplication-before-widening"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"G09","status":"REFUTED","defect":true,"required_findings":["reverse-implication-counterexample"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"G10","status":"REFUTED","defect":true,"required_findings":["assignment-add-order"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"G11","status":"REFUTED","defect":true,"required_findings":["upper-bound-for-strict-lis"],"forbidden_findings":["rewrite-main","rename-variables"],"optional_findings":[],"scope":{"allowed_paths":["solution.cpp"],"max_modified_regions":1}},
+    {"id":"G12","status":"PROVED","defect":false,"required_findings":["nonstandard-route-preserved"],"forbidden_findings":["replace-with-bellman-ford"],"optional_findings":[]},
+    {"id":"G13","status":"REFUTED","defect":true,"required_findings":["prefix-predicate-not-monotone"],"forbidden_findings":[],"optional_findings":[]},
+    {"id":"G14","status":"UNRESOLVED","defect":false,"required_findings":["missing-definition-and-complexity-model"],"forbidden_findings":["invented-algorithm"],"optional_findings":[]},
+    {"id":"G15","status":"REFUTED","defect":true,"required_findings":["query-mutates-shared-version"],"forbidden_findings":["theory-path-copy-is-wrong"],"optional_findings":[]},
+    {"id":"G16","status":"REFUTED","defect":true,"required_findings":["missing-value-domain-depth"],"forbidden_findings":[],"optional_findings":["node-byte-estimate"]},
+    {"id":"G17","status":"CONDITIONAL","defect":false,"required_findings":["operand-types-control-evaluation"],"forbidden_findings":["unconditional-int-overflow"],"optional_findings":[]},
+    {"id":"G18","status":"PROVED","defect":false,"required_findings":["prefix-suffix-covers-all-other-children"],"forbidden_findings":["replace-whole-tree-dp"],"optional_findings":[]}
+  ]
+}

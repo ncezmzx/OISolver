@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {"id":"G01","category":"proof","prompt":"有向图允许负边但无负环。题解直接使用定点版 Dijkstra，并声称点弹出后标签永久最优。判断并给证据。"},
+    {"id":"G02","category":"debug","prompt":"要找有序数组中不大于 x 的最大元素，代码初始化 l=0,r=n-1，循环后二话不说输出 a[l]。样例都满足 x>=a[0]，原题不保证。寻找最小边界。"},
+    {"id":"G03","category":"code","prompt":"严格 LIS 的 tails 实现使用 upper_bound(tails,x) 替换或追加；官方样例没有重复值。判断代码。"},
+    {"id":"G04","category":"complexity","prompt":"等半分治的每个大小 k 节点都重新排序 k 项，作者据每层总规模 n 宣称总复杂度 Theta(n log n)。"},
+    {"id":"G05","category":"idea","prompt":"0/1 非负权图不用双端队列，而用普通二叉堆 Dijkstra 加陈旧项检查；声称 O((V+E)log(E+2))。这是用户希望保留的非标准路线。"},
+    {"id":"G06","category":"code","prompt":"0/1 背包思路正确，但一维 dp 对每件物品按容量从小到大更新。请定位理论与实现的关系。"},
+    {"id":"G07","category":"optimization","prompt":"树形 DP 对每个孩子都重新遍历其余孩子合并信息。作者称总 O(n log n)，n=2e5，合并为 O(1)，树可为星形。正确性暂不质疑，只审性能。"},
+    {"id":"G08","category":"code","prompt":"多测 C++ 中全局 ans 没有每测清零；另有 int a,b; long long area=a*b;，a,b 可到 50000。审查所有独立问题。"},
+    {"id":"G09","category":"proof","prompt":"整数域中由 x=1 可推出 x^2=1，题解因此写 x^2=1 当且仅当 x=1。"},
+    {"id":"G10","category":"differential","prompt":"懒标记同时支持区间加与区间覆盖。实现无论操作顺序都把 add 累加在旧 tag 上，并称两个标记可交换。给最小诊断序列。"},
+    {"id":"G11","category":"scope","prompt":"用户明确要求只修改 solution.cpp 的 solve()：严格 LIS 误用了 upper_bound。给最小修复；不得改 main、变量名、I/O 或格式化全文件。"},
+    {"id":"G12","category":"idea","prompt":"n<=180，单源最短路，允许负边但无负环。用户用 Floyd-Warshall 后读取源行，O(n^3) 与 O(n^2) 均满足限制，并希望保留。AI 是否应因 Bellman-Ford 更标准而否定？"},
+    {"id":"G13","category":"editorial","prompt":"原题数组元素可负。给出的题解说 Fenwick 二进制提升可直接找第一个前缀和 >=K，因为该谓词单调。"},
+    {"id":"G14","category":"problem","prompt":"用户只说使用未定义的“十字素数折叠”，声称所有输入线性；没有题面、定义、伪码、规模或证明。"},
+    {"id":"G15","category":"code","prompt":"可持久化线段树理论采用路径复制且更新正确；实际 query 为了方便会原地 push 懒标记到共享孩子，再查询旧版本。判断完整实现。"},
+    {"id":"G16","category":"complexity","prompt":"值域 [0,2^60) 的动态开点线段树做 q 次点修改，作者因每次只走一条路径而声称总空间 O(q)，节点含两个 64 位孩子和值。"},
+    {"id":"G17","category":"code","prompt":"只看到 long long t=a*b;，题面给 a,b 数值上界，但没有给变量声明或前序强制转换。能否无条件断言乘法在 int 中溢出？"},
+    {"id":"G18","category":"explanation","prompt":"用户只问为何树形 DP 的前后缀合并不会漏掉某个孩子，已知合并运算有单位元且满足结合律。请判断该局部结论，不展开整篇题解。"}
+  ]
+}

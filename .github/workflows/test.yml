@@ -1,0 +1,52 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        # Python 3.8 is unavailable on ubuntu-latest (26.04); pin the oldest
+        # supported runner used by the declared compatibility floor.
+        os: [ubuntu-22.04, windows-latest]
+        python: ["3.8", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install --upgrade pip setuptools wheel
+      - run: python -m pip install -e .
+      - run: python tools/check_quality.py
+      - run: python -m unittest discover -s tests -v
+      - run: python -m compileall -q src tools tests
+      - run: python -m pip wheel --no-deps --no-build-isolation --wheel-dir wheelhouse .
+      - if: runner.os == 'Linux'
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -pedantic tests/fixtures/style/original.cpp -o /tmp/oisolver-original
+          g++ -std=c++17 -O2 -Wall -Wextra -pedantic tests/fixtures/style/expected.cpp -o /tmp/oisolver-expected
+          test "$(printf '2\n1 1\n' | /tmp/oisolver-original)" = "2"
+          test "$(printf '2\n1 1\n' | /tmp/oisolver-expected)" = "1"
+      - if: runner.os == 'Linux'
+        run: |
+          python -m oisolver.cli compiler-capabilities --output /tmp/compiler-capabilities.json
+          python - <<'PY'
+          import json
+          report = json.load(open('/tmp/compiler-capabilities.json', encoding='utf-8'))
+          gxx = next(item for item in report['compilers'] if item['requested'] == 'g++')
+          assert gxx['sanitizer_compatible'], report
+          print('compiler capability status:', report['status'])
+          PY
+          if command -v clang++ >/dev/null; then
+            printf 'int main(){volatile int x=1;return x-1;}\n' >/tmp/oisolver-clang-probe.cpp
+            clang++ -std=c++17 -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer /tmp/oisolver-clang-probe.cpp -o /tmp/oisolver-clang-probe
+            ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 /tmp/oisolver-clang-probe
+            clang++ -std=c++17 -fsyntax-only -Xclang -ast-dump=json /tmp/oisolver-clang-probe.cpp >/tmp/oisolver-clang-ast.json
+            python -c "import json; assert json.load(open('/tmp/oisolver-clang-ast.json'))['kind']"
+          else
+            echo 'clang++ unavailable: capability report is explicitly DEGRADED'
+          fi
+      - run: git diff --check

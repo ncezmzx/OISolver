@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-21",
+  "experiment": "fixed-model baseline-vs-skill blind-12",
+  "status": "UNRESOLVED",
+  "executed": false,
+  "case_count_required": 12,
+  "model_id": null,
+  "model_build": null,
+  "settings": null,
+  "raw_log_paths": [],
+  "arms": {
+    "baseline": {"status": "NOT_EXECUTED", "answers": null},
+    "skill": {"status": "NOT_EXECUTED", "answers": null}
+  },
+  "metrics": {
+    "per_case_results": null,
+    "hidden_bug_recall": null,
+    "correct_unconventional_false_positive_rate": null,
+    "progressive_debug_compliance": null,
+    "mean_counterexample_size": null,
+    "cpp_style_preservation": null
+  },
+  "failure_attribution": {
+    "category": "MISSING_MODEL_ENTRY_POINT",
+    "detail": "No model executable, service configuration, or model credential environment variable was available. The controller Agent had already inspected repository/key paths and cannot serve as an independently blind model runner."
+  },
+  "substitution_policy": "Synthetic or reference answers were not substituted for a live model run.",
+  "next_required_action": "Run both verified key-free archives in independently isolated workspaces with one fixed model/build/settings, retain raw logs, then grade only in the controller workspace."
+}

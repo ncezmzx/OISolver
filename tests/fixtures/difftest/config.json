@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "generator": {"argv": ["python3", "generator.py"]},
+  "candidate": {"argv": ["python3", "candidate.py"]},
+  "oracle": {"argv": ["python3", "oracle.py"]},
+  "trials": 20,
+  "seed": 20261121,
+  "comparison": "tokens",
+  "timeout_seconds": 2,
+  "metadata": {"runtime": "Python fixture", "purpose": "strict LIS regression"},
+  "output_dir": "output",
+  "shrink": {
+    "validator": {"argv": ["python3", "validator.py"]},
+    "units": ["lines", "tokens", "integers"],
+    "max_attempts": 200
+  }
+}

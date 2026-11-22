@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "base": {
+    "provider": "CPscore",
+    "repository": "https://github.com/SemsueZhang/CPscore",
+    "audited_revision": "084c4ef855c6c9092ba40e23c047f8e2391dd144",
+    "supported_schema_versions": [1],
+    "identity_rule": "algorithm_id is a foreign key into CPscore catalog.json; names, aliases, categories, sources and upstream text are never copied here"
+  },
+  "entries": [
+    {
+      "algorithm_id": "oiwiki.misc.cdq-divide",
+      "claims": [
+        {
+          "claim_id": "strict-coordinate-tie-boundary",
+          "statement": "When a CDQ transition requires the first coordinate to be strictly smaller, equal-coordinate records must not contribute across a recursion boundary unless an equivalent tie rule has been proved.",
+          "kind": "necessary-precondition",
+          "origin": "independent-derivation",
+          "scope": "offline dominance counting with a strict first coordinate",
+          "derivation": "A cross-half contribution is legal only if x_left < x_right. Sorting by (x,y) alone can split equal x across the midpoint, where y_left <= y_right would count an illegal pair. Grouping equal x or delaying their insertion restores the strict predicate.",
+          "verification": {
+            "status": "proved",
+            "evidence": [
+              {"type": "independent-proof", "reference": "tests/test_algorithm_oracles.py::test_cdq_strict_ties"},
+              {"type": "exhaustive-oracle", "reference": "tests/test_algorithm_oracles.py::test_cdq_strict_ties"}
+            ]
+          }
+        },
+        {
+          "claim_id": "implementation-sensitive-complexity",
+          "statement": "A CDQ bound must separately account for recursion depth, per-level record volume, sorting or merging, and every inner data-structure operation; per-node sorting can add a logarithmic factor.",
+          "kind": "complexity-condition",
+          "origin": "independent-derivation",
+          "scope": "balanced CDQ over N records",
+          "derivation": "There are O(log N) levels and O(N) record appearances per level. Linear merge gives O(N log N) total merge work. If each node independently sorts k records in Theta(k log k), level d costs Theta(N(log N-d)), whose sum is Theta(N log^2 N). An O(log U) inner update/query multiplies the number of such operations rather than the sort cost by name alone.",
+          "verification": {
+            "status": "proved",
+            "evidence": [
+              {"type": "level-sum-proof", "reference": "tests/test_algorithm_oracles.py::test_per_node_sorting_sum"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "algorithm_id": "oiwiki.dp.tree",
+      "claims": [
+        {
+          "claim_id": "all-except-one-prefix-suffix",
+          "statement": "If a tree-DP transition needs the associative aggregate of all child messages except one child, prefix and suffix aggregates compute every exclusion in linear time in the node degree.",
+          "kind": "optimization-condition",
+          "origin": "independent-derivation",
+          "scope": "associative operation with an identity and child order used only for aggregation",
+          "derivation": "For child i, combine prefix[i], the aggregate before i, with suffix[i+1], the aggregate after i. Each message enters one prefix and one suffix update, so all exclusions cost O(deg(u)); associativity proves equality to the naive fold. Non-associative or order-sensitive transitions need a separate proof.",
+          "verification": {
+            "status": "proved",
+            "evidence": [
+              {"type": "algebraic-proof", "reference": "tests/test_algorithm_oracles.py::test_prefix_suffix_exclusion"},
+              {"type": "exhaustive-oracle", "reference": "tests/test_algorithm_oracles.py::test_prefix_suffix_exclusion"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "algorithm_id": "oiwiki.ds.seg",
+      "claims": [
+        {
+          "claim_id": "lazy-tag-composition-order",
+          "statement": "Lazy propagation must compose a newly applied operation with the existing pending operation in chronological order; assignment and addition do not commute.",
+          "kind": "implementation-invariant",
+          "origin": "independent-derivation",
+          "scope": "range assignment and range addition tags",
+          "derivation": "A pending tag denotes the function still to apply to descendants. Applying new after old stores new o old. Thus add(a) after assign(v) becomes assign(v+a), while assign(v) after add(a) discards the old addition. Reversing either rule changes the represented function.",
+          "verification": {
+            "status": "proved",
+            "evidence": [
+              {"type": "function-composition-proof", "reference": "tests/test_algorithm_oracles.py::test_lazy_tag_composition"},
+              {"type": "exhaustive-oracle", "reference": "tests/test_algorithm_oracles.py::test_lazy_tag_composition"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "algorithm_id": "oiwiki.ds.persistent-seg",
+      "claims": [
+        {
+          "claim_id": "path-copy-version-isolation",
+          "statement": "A persistent segment-tree update may mutate only nodes newly allocated for that version; every shared node reachable from an older root remains immutable.",
+          "kind": "representation-invariant",
+          "origin": "independent-derivation",
+          "scope": "path-copy point updates",
+          "derivation": "The new root copies the update path and reuses untouched subtrees. Any write to a reused node changes an older root's reachable state, violating persistence. Copying one node per level preserves old versions and allocates O(log n) nodes per point update.",
+          "verification": {
+            "status": "proved",
+            "evidence": [
+              {"type": "inductive-invariant", "reference": "tests/test_algorithm_oracles.py::test_persistent_path_copy"},
+              {"type": "exhaustive-oracle", "reference": "tests/test_algorithm_oracles.py::test_persistent_path_copy"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "algorithm_id": "oiwiki.ds.seg.dynamic",
+      "claims": [
+        {
+          "claim_id": "point-update-node-upper-bound",
+          "statement": "For a fixed binary value domain of depth D, q dynamic-segment-tree point updates allocate at most one previously absent node per visited level per update, hence at most 1+q(D+1) nodes before sharing or duplicate-path savings.",
+          "kind": "space-condition",
+          "origin": "independent-derivation",
+          "scope": "single-root dynamic segment tree with point updates and no rebuilding",
+          "derivation": "A point update follows one root-to-leaf path containing D+1 visited nodes. Existing nodes are reused, so each update creates no more than D+1 nodes. Adding the optional sentinel/root yields the stated upper bound. Range updates, persistence, multiple roots, eager child creation, and allocator capacity require separate accounting.",
+          "verification": {
+            "status": "proved",
+            "evidence": [
+              {"type": "counting-proof", "reference": "tests/test_algorithm_oracles.py::test_dynamic_segment_tree_node_bound"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "algorithm_id": "oiwiki.contest.common-tricks.differential-testing",
+      "claims": [
+        {
+          "claim_id": "finite-tests-are-not-proof",
+          "statement": "A successful differential-testing run establishes only that no discrepancy was found in the recorded generated domain and budget; it is not a proof of universal correctness.",
+          "kind": "verification-boundary",
+          "origin": "independent-derivation",
+          "scope": "finite exhaustive or randomized comparison unless the tested domain is the entire stated domain",
+          "derivation": "The run quantifies over only the executed inputs. Inputs outside that finite set remain unchecked, so the universal problem claim does not follow unless the set is proved exhaustive for the full domain.",
+          "verification": {
+            "status": "proved",
+            "evidence": [
+              {"type": "quantifier-proof", "reference": "skills/oi-problem-solver/references/differential-testing.md"}
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
