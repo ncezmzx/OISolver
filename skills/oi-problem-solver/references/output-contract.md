@@ -20,6 +20,12 @@
 - Catalog：写“检索到 ID／来源，具体结论另经 … 核验”，不能写“Catalog 证明”。
 - 之前判断错：明确“撤回先前的 …；错误在 …；修正为 …”。
 
+## 机器可检验输出
+
+场景评估仍使用 `schema_version/status/findings/conditions/evidence/modifications`。`PROVED`／`CONDITIONAL` 另带半形式化 `proof_chain`，详见 proof-complexity；缺链或链未关闭按 unsupported 计。固定模型 Baseline-vs-Skill 实验还需顶层 `run.model_id/model_build/settings/mode/experiment_id`；两臂模型、构建、canonical inference settings 与 experiment 必须完全相同，避免把换模型／参数冒充 Skill 增益。
+
+实验比较至少报告 hidden-bug recall、正确非常规思路 false-positive rate、progressive-debug compliance、counterexample size、C++ style preservation。缺失真实 patch-quality 证据时 style 指标为 null，不用主观分数补齐。盲包必须是 key/reference/tests 均不在 archive 中的可验证 ZIP；真正保密还需无法挂载控制仓库的独立 OS／容器工作区。
+
 ## 修改说明
 
 每次代码改动列：文件／函数、修改点、原因、是否改变算法、时间／空间变化、码风保持情况、实际验证。用户要求片段就不给无关完整重写；要求完整代码才输出完整代码。

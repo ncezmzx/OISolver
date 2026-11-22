@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "candidate": {"argv": ["python3", "candidate.py"]},
+  "interactor": {"argv": ["python3", "interactor.py"]},
+  "seed": 20261121,
+  "timeout_seconds": 3,
+  "max_queries": 2,
+  "max_steps": 8,
+  "candidate_message_pattern": "^(?:\\? [0-9]+|! -?[0-9]+)$",
+  "interactor_message_pattern": "^-?[0-9]+$",
+  "query_pattern": "^\\?",
+  "output_dir": "output"
+}

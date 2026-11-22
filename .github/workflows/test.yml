@@ -23,3 +23,11 @@ jobs:
       - run: python tools/check_quality.py
       - run: python -m unittest discover -s tests -v
       - run: python -m compileall -q src tools tests
+      - run: python -m pip wheel --no-deps --no-build-isolation --wheel-dir wheelhouse .
+      - if: runner.os == 'Linux'
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -pedantic tests/fixtures/style/original.cpp -o /tmp/oisolver-original
+          g++ -std=c++17 -O2 -Wall -Wextra -pedantic tests/fixtures/style/expected.cpp -o /tmp/oisolver-expected
+          test "$(printf '2\n1 1\n' | /tmp/oisolver-original)" = "2"
+          test "$(printf '2\n1 1\n' | /tmp/oisolver-expected)" = "1"
+      - run: git diff --check

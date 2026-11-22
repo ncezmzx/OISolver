@@ -1,3 +1,3 @@
 """OISolver: evidence-driven OI problem research tooling."""
 
-__version__ = "0.1.0"
+__version__ = "2.0.0"

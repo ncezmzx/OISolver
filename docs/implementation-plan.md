@@ -1,57 +1,63 @@
-# Implementation plan and acceptance map
+# OISolver V2 implementation and acceptance map
 
-This plan records the design gate used after the read-only audits and before implementation. The detailed evidence is in [research-audit.md](research-audit.md).
+该文档记录 V2 在不重建、不削弱原架构前提下的实现映射。外部只读审计见 [research-audit.md](research-audit.md)，实际运行结果见 [evaluation-results.md](evaluation-results.md)。
 
-## Phase 1 — Architecture audit
+## Preserved contracts
 
-- Freeze OISolver Git status and inventory.
-- Read CPscore entry docs, `AGENTS.md`, all Skill entry points, Catalog schema/CLI/updater/checks; execute its Catalog gate.
-- Read OIBlogScore nine Skills, proof/complexity/code/counterexample protocols, repository state machine, repair boundary, Catalog evidence layers, tests and evaluation report; execute its quality/test gates.
-- Produce a reuse matrix: CPscore identity/query is a direct dependency; review standards are adapted; article queue/scoring/repair workflows are excluded.
+- 五态、四层验证、progressive Debug default、direct mode override、最小修改授权边界不变。
+- `logical-gap` 只能反驳精确 `reasoning-step`；不能外推到最终算法。
+- CPscore 原生 Catalog 是唯一 identity/query owner；OISolver overlay 只用稳定 ID 外键。
+- OIBlogScore 接收中性证据，`verdict_transfer=false`，不共享其博客队列／评分／修复 workflow。
 
-**Exit:** stable external contracts, source revisions, license boundary, and incompatibilities are documented.
+## V2 implementation phases
 
-## Phase 2 — Interfaces and protocols
+### 1. Structured differential evidence
 
-- One Skill entry `oi-problem-solver`, with modular References rather than one monolithic prompt.
-- Mandatory five claim states and four-layer verification.
-- Dynamic routing by material/request, progressive Debug default, direct mode override, modification-scope contract.
-- CPscore bridge requires real `catalog.py + catalog.json`; read-only delegation and stable-ID overlay.
-- OIBlogScore exchange is neutral evidence with no verdict or edit authorization.
-- Deterministic interfaces: evidence record, differential-test config/report, evaluation cases/keys/answers.
+- canonical tree/graph/operation codecs and legal structural proposals；
+- `_ShrinkSession` 统一执行外部 validator 与 candidate/oracle mismatch gate；
+- seed、original bytes/hash、outputs、accepted/rejected proposal、final revalidation 持久化；
+- independent unit tests + weighted-tree E2E。
 
-**Exit:** each module has inputs, outputs, failure behavior, and evidence boundary.
+### 2. Execution evidence
 
-## Phase 3 — Implementation
+- C++ ASan/UBSan compilation and specific diagnostic classes；
+- Linux address-space/stack rlimits and resource evidence；
+- optional bwrap with fail-closed availability check；
+- dual-process Candidate↔Interactor relay, chronology, message/query limits and first-failure localization。
 
-- Implement Skill and References.
-- Implement standard-library Python package: Catalog, records, process runner, differential testing/shrinking, evaluator, interop, CLI.
-- Add no Catalog copy and no automatic network/update path.
-- Add provenance hashes, fail-closed schema/foreign-key checks, validator-only shrink, and exact scope validation.
+### 3. Proof evidence
 
-**Exit:** no placeholder modules; package builds and CLI works outside checkout.
+- proof chain schema: premises, edge cases, atomic steps, dependency DAG order, conclusion；
+- eligibility gate for `PROVED/CONDITIONAL`；
+- OI probes for equivalence, greedy, DP, amortization, randomization and unresolved boundary obligations；
+- missing-premise-driven counterexample plans。
 
-## Phase 4 — Evaluation
+### 4. Blind experiment and patch quality
 
-- Independent small-domain oracles for CDQ, divide-and-conquer sums, tree-DP prefix/suffix, lazy tags, persistence, dynamic nodes, and a correct nonstandard shortest-path route.
-- End-to-end deterministic and seeded-random differential fixtures.
-- Golden and key-free blind bundle covering the required difficult scenarios.
-- Minimal reference patch fixture that preserves every unrelated C++ byte.
-- Metrics for status, defect recall, correct-algorithm false positives, finding coverage, unsupported claims, and scope violations.
+- deterministic key/reference/result/test-free ZIP + verifier；
+- paired baseline/Skill bundles and identical-model/experiment enforcement；
+- hidden-bug recall, unconventional-correct false positives, debug compliance, counterexample size, C++ style preservation；
+- reusable token/structural/optional-clang-AST and line/style retention metrics with rewrite penalties。
 
-**Exit:** quality gate, unit tests, compileall, wheel install, `git diff --check`, real CPscore integration, and cross-platform CI pass. Reference conformance is not reported as Agent accuracy.
+### 5. Delivery gates
 
-## Phase 5 — Delivery
-
-- Publish architecture, workflows, audit, executed results, exact unexecuted items, limitations, and future work.
-- Commit and push only the fixed Arena branch; open a PR and inspect its CI.
+- independent new tests without regressing prior 30；
+- quality, unittest, compileall, C++ compile/run, whitespace, wheel/install, CI；
+- documented interactive and tree shrink commands/seeds/artifacts；
+- final report split into 已设计／已实现／实际测试／未执行／已知限制。
 
 ## Interface ownership
 
-| Interface | Owner | OISolver action |
+| Interface | Owner | OISolver V2 action |
 |---|---|---|
-| Algorithm IDs, aliases, categories, source/version/update | CPscore | read-only native delegation |
-| Solver-side preconditions, pitfalls, proof dependencies | OISolver | stable-ID overlay with evidence |
-| Static blog verdict, coverage, repair journal | OIBlogScore | neutral evidence export only |
-| User code changes | user authorization + OISolver Agent | minimal scoped diff; no CLI auto-edit |
-| Process isolation | host/container | OISolver records argv/timeout but is not a sandbox |
+| Algorithm IDs, aliases, source/version/update | CPscore | read-only native delegation; never copy or mutate |
+| Solver preconditions, proof dependencies, pitfalls | OISolver | stable-ID overlay with evidence |
+| Static blog verdict and repair journal | OIBlogScore | neutral evidence export only |
+| User C++ changes | explicit user authorization + Agent | minimum scoped diff; CLI never auto-edits |
+| Semantic proof truth | Agent + independent reviewer | runtime checks shape/obligations only |
+| Native process privileges | host OS | timeout/rlimit evidence; no false sandbox claim |
+| Strong isolation / blind secrecy | external OS/container controller | bwrap where available; archive verifier cannot replace mount isolation |
+
+## Acceptance status
+
+Implementation and local engineering gates are complete in the recorded Linux environment. A real model Baseline-vs-Skill run and final remote CI are separate gates; neither may be inferred from synthetic framework tests. Current exact status is maintained in [delivery-status.md](delivery-status.md).

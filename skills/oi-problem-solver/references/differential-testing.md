@@ -47,11 +47,29 @@ OISolver CLI 配置使用 argv 数组，不走 shell：
 }
 ```
 
-运行 `oisolver difftest --config config.json`。失败目录保存输入、两侧输出、stderr、种子和报告。CLI 不是安全沙箱；不可信程序仍需容器／OJ runner 的 CPU、内存、文件系统和网络限制。
+运行 `oisolver difftest --config config.json`。失败目录保存输入、两侧输出、stderr、种子和报告。V2 原生 runner 可设置 Linux 地址空间／栈 hard limits，但仍不是文件系统／网络沙箱；需隔离时显式选择 bubblewrap 或外部容器，后端不可用必须失败关闭。
 
 ## 缩小
 
-只有 validator 接受且差异复现才接受一次删除／数值缩小。每轮后重跑两侧；最终再验证。通用 ddmin 得到的是相对所用变换的局部最小，不自动是数学上的全局最小。无 validator 时 CLI 故意跳过自动缩小。
+只有 validator 接受且差异复现才接受一次删除／数值缩小。每轮后重跑两侧；最终再验证。所有尝试写入 `shrink-trace.json`，含变换、输入 hash、validator 状态、两侧状态与是否接受。通用 ddmin 得到的是相对所用变换的局部最小，不自动是数学上的全局最小。无 validator 时 CLI 故意跳过自动缩小。
+
+V2 可在 `shrink.domain` 选择显式 canonical codec：
+
+- `tree`：首行 `n`，可选 n 个点权，随后 n-1 条带／不带权边；尝试删叶、收缩非根子树根、缩点权／边权并重编号。
+- `graph`：首行 `n m`，随后 m 条边；配置 directed、DAG、weak/strong connectivity、自环／重边和边权约束，尝试删边、删边并移除孤立点、孤立点重编号和缩权。
+- `operation-sequence`：首行 `n q`，可选初始数组，随后 q 个操作；自动修复 q，二分删段／单删，并缩区间端点、参数和初值。`preserve_prefix_operations` 与 `preserve_initial_array` 可逐字保留必要前置状态；其余前置操作也只有在 validator 通过且差异仍复现时才会被移除。
+
+这些内置 shape 检查不是题目合法性证明；对应题目的外部 validator 仍是强制门禁。例如：
+
+```json
+"shrink": {
+  "validator": {"argv": ["python3", "validator.py"]},
+  "domain": {"kind": "tree", "root": 1,
+             "node_weights": true, "edge_weights": true},
+  "units": [],
+  "max_attempts": 200
+}
+```
 
 ## 报告
 

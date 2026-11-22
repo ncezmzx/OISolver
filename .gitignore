@@ -11,3 +11,5 @@ dist/
 # Differential-testing outputs are evidence artifacts, not source.
 .oisolver/
 evaluation/bundles/
+tests/fixtures/difftest-tree/output/
+tests/fixtures/interactive/output/

@@ -11,6 +11,7 @@ import tempfile
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
+from .domain_shrinkers import DomainShrinkError, shrink_domain
 from .process import CommandResult, run_command
 
 
@@ -107,104 +108,176 @@ def _run_pair(candidate_argv: Sequence[str], oracle_argv: Sequence[str], cwd: Pa
             candidate, oracle)
 
 
+class _ShrinkSession:
+    def __init__(self, validator_argv: Sequence[str], candidate_argv: Sequence[str],
+                 oracle_argv: Sequence[str], cwd: Path, timeout: float,
+                 environment: Dict[str, str], max_output: int, comparison: str,
+                 max_attempts: int):
+        self.validator_argv = validator_argv
+        self.candidate_argv = candidate_argv
+        self.oracle_argv = oracle_argv
+        self.cwd = cwd
+        self.timeout = timeout
+        self.environment = environment
+        self.max_output = max_output
+        self.comparison = comparison
+        self.max_attempts = max_attempts
+        self.attempts = 0
+        self.accepted = 0
+        self.trace: List[Dict[str, Any]] = []
+
+    def can_attempt(self) -> bool:
+        return self.attempts < self.max_attempts
+
+    def attempt(self, trial: bytes, transform: str) -> bool:
+        if not self.can_attempt():
+            return False
+        self.attempts += 1
+        validator = run_command(self.validator_argv, self.cwd, trial, self.timeout,
+                                self.environment, self.max_output)
+        row: Dict[str, Any] = {
+            "attempt": self.attempts,
+            "transform": transform,
+            "input_bytes": len(trial),
+            "input_sha256": hashlib.sha256(trial).hexdigest(),
+            "validator_returncode": validator.returncode,
+            "validator_timed_out": validator.timed_out,
+            "accepted": False,
+        }
+        if validator.timed_out or validator.returncode != 0:
+            row["outcome"] = "illegal"
+            self.trace.append(row)
+            return False
+        state, candidate, oracle = _run_pair(
+            self.candidate_argv, self.oracle_argv, self.cwd, trial, self.timeout,
+            self.environment, self.max_output, self.comparison
+        )
+        row.update({
+            "outcome": state,
+            "candidate_returncode": candidate.returncode,
+            "candidate_timed_out": candidate.timed_out,
+            "oracle_returncode": oracle.returncode,
+            "oracle_timed_out": oracle.timed_out,
+        })
+        if state == "mismatch":
+            row["accepted"] = True
+            self.accepted += 1
+            self.trace.append(row)
+            return True
+        self.trace.append(row)
+        return False
+
+
 def _ddmin(items: List[Any], rebuild: Callable[[List[Any]], bytes],
-           predicate: Callable[[bytes], bool], budget: List[int]) -> Tuple[List[Any], int]:
+           session: _ShrinkSession, label: str) -> Tuple[List[Any], int]:
     current = list(items)
     granularity = 2
-    attempts_before = budget[0]
-    while len(current) >= 2 and budget[0] > 0:
+    attempts_before = session.attempts
+    while len(current) >= 2 and session.can_attempt():
         chunk = int(math.ceil(len(current) / float(granularity)))
         reduced = False
         for start in range(0, len(current), chunk):
             trial = current[:start] + current[start + chunk:]
             if not trial:
                 continue
-            budget[0] -= 1
-            if predicate(rebuild(trial)):
+            transform = "generic:{}:delete:{}:{}".format(
+                label, start, min(len(current), start + chunk)
+            )
+            if session.attempt(rebuild(trial), transform):
                 current = trial
                 granularity = max(2, granularity - 1)
                 reduced = True
                 break
-            if budget[0] <= 0:
+            if not session.can_attempt():
                 break
         if not reduced:
             if granularity >= len(current):
                 break
             granularity = min(len(current), granularity * 2)
-    return current, attempts_before - budget[0]
+    return current, session.attempts - attempts_before
 
 
 def _shrink(data: bytes, units: Sequence[str], validator_argv: Sequence[str],
             candidate_argv: Sequence[str], oracle_argv: Sequence[str], cwd: Path,
             timeout: float, environment: Dict[str, str], max_output: int,
-            comparison: str, max_attempts: int) -> Tuple[bytes, Dict[str, Any]]:
-    budget = [max_attempts]
-    stats = {"attempts": 0, "accepted": 0, "units": list(units),
-             "legality_validator": list(validator_argv)}
-
-    def predicate(trial: bytes) -> bool:
-        if budget[0] < 0:
-            return False
-        validator = run_command(validator_argv, cwd, trial, timeout, environment, max_output)
-        if validator.timed_out or validator.returncode != 0:
-            return False
-        state, _, _ = _run_pair(candidate_argv, oracle_argv, cwd, trial, timeout,
-                                environment, max_output, comparison)
-        if state == "mismatch":
-            stats["accepted"] += 1
-            return True
-        return False
-
+            comparison: str, max_attempts: int,
+            domain: Optional[Dict[str, Any]] = None) -> Tuple[bytes, Dict[str, Any]]:
+    session = _ShrinkSession(validator_argv, candidate_argv, oracle_argv, cwd,
+                             timeout, environment, max_output, comparison,
+                             max_attempts)
+    stats: Dict[str, Any] = {
+        "attempts": 0,
+        "accepted": 0,
+        "units": list(units),
+        "legality_validator": list(validator_argv),
+    }
     current = data
+    if domain is not None:
+        try:
+            current, domain_stats = shrink_domain(
+                current, domain, session.attempt, session.can_attempt
+            )
+        except DomainShrinkError as exc:
+            raise DifferentialError("Domain shrinker: {}".format(exc))
+        stats["domain"] = domain_stats
+
     for unit in units:
-        if budget[0] <= 0:
+        if not session.can_attempt():
             break
-        before = budget[0]
+        before = session.attempts
         if unit == "lines":
             lines = current.splitlines(keepends=True)
             if len(lines) > 1:
-                reduced, _ = _ddmin(lines, lambda rows: b"".join(rows), predicate, budget)
+                reduced, _ = _ddmin(lines, lambda rows: b"".join(rows),
+                                    session, "lines")
                 current = b"".join(reduced)
         elif unit == "tokens":
             tokens = current.split()
             if len(tokens) > 1:
                 reduced, _ = _ddmin(tokens, lambda rows: b" ".join(rows) + b"\n",
-                                    predicate, budget)
+                                    session, "tokens")
                 current = b" ".join(reduced) + b"\n"
         elif unit == "integers":
             pattern = re.compile(rb"(?<![A-Za-z0-9_])-?[0-9]+")
             position = 0
-            while budget[0] > 0:
+            while session.can_attempt():
                 match = pattern.search(current, position)
                 if not match:
                     break
                 original = int(match.group())
                 choices = []
-                for candidate in (0, 1, -1, int(original / 2)):
+                half_toward_zero = (original // 2 if original >= 0
+                                    else -((-original) // 2))
+                for candidate in (0, 1, -1, half_toward_zero):
                     if candidate != original and abs(candidate) <= abs(original) and candidate not in choices:
                         choices.append(candidate)
                 accepted = False
                 for number in choices:
-                    budget[0] -= 1
-                    trial = current[:match.start()] + str(number).encode("ascii") + current[match.end():]
-                    if predicate(trial):
+                    trial = (current[:match.start()] + str(number).encode("ascii")
+                             + current[match.end():])
+                    transform = "generic:integer:{}:{}->{}".format(
+                        match.start(), original, number
+                    )
+                    if session.attempt(trial, transform):
                         current = trial
                         position = match.start()
                         accepted = True
                         break
-                    if budget[0] <= 0:
+                    if not session.can_attempt():
                         break
                 if not accepted:
                     position = match.end()
         else:
             raise DifferentialError("Unsupported shrink unit: {}".format(unit))
-        stats.setdefault("attempts_by_unit", {})[unit] = before - budget[0]
-    stats["attempts"] = max_attempts - budget[0]
+        stats.setdefault("attempts_by_unit", {})[unit] = session.attempts - before
 
     validator = run_command(validator_argv, cwd, current, timeout, environment, max_output)
     state, candidate, oracle = _run_pair(candidate_argv, oracle_argv, cwd, current,
                                          timeout, environment, max_output, comparison)
     stats.update({
+        "attempts": session.attempts,
+        "accepted": session.accepted,
+        "trace": session.trace,
         "final_legal": not validator.timed_out and validator.returncode == 0,
         "final_mismatch": state == "mismatch",
         "candidate": candidate.as_dict(),
@@ -364,9 +437,16 @@ def run_config(config_path: Path) -> Tuple[int, Dict[str, Any]]:
                     else:
                         validator_argv = _render(_argv(shrink["validator"], "shrink.validator"),
                                                  case_seed, iteration)
-                        units = shrink.get("units", ["lines", "tokens", "integers"])
-                        if not isinstance(units, list) or not units or any(
-                                unit not in ("lines", "tokens", "integers") for unit in units):
+                        domain = shrink.get("domain")
+                        if domain is not None and not isinstance(domain, dict):
+                            raise DifferentialError("shrink.domain must be an object")
+                        units = shrink.get(
+                            "units", [] if domain is not None else ["lines", "tokens", "integers"]
+                        )
+                        if (not isinstance(units, list)
+                                or (not units and domain is None)
+                                or any(unit not in ("lines", "tokens", "integers")
+                                       for unit in units)):
                             raise DifferentialError("shrink.units contains an unsupported unit")
                         max_attempts = shrink.get("max_attempts", 300)
                         if type(max_attempts) is not int or max_attempts <= 0:
@@ -374,13 +454,28 @@ def run_config(config_path: Path) -> Tuple[int, Dict[str, Any]]:
                         minimized, shrink_report = _shrink(
                             data, units, validator_argv, candidate_rendered,
                             oracle_rendered, cwd, timeout, command_environment,
-                            max_output, comparison, max_attempts
+                            max_output, comparison, max_attempts, domain
                         )
                         (failure_dir / "minimized-input.txt").write_bytes(minimized)
-                        failure["shrink"] = dict(shrink_report, status="DONE",
-                                                 original_bytes=len(data),
-                                                 minimized_bytes=len(minimized),
-                                                 minimized_sha256=hashlib.sha256(minimized).hexdigest())
+                        trace = shrink_report.pop("trace")
+                        trace_path = failure_dir / "shrink-trace.json"
+                        _atomic_json(trace_path, {
+                            "schema_version": 1,
+                            "base_seed": seed,
+                            "case_seed": case_seed,
+                            "iteration": iteration,
+                            "attempts": trace,
+                        })
+                        failure["shrink"] = dict(
+                            shrink_report,
+                            status="DONE",
+                            original_bytes=len(data),
+                            minimized_bytes=len(minimized),
+                            minimized_sha256=hashlib.sha256(minimized).hexdigest(),
+                            trace_file=str(trace_path),
+                            trace_entries=len(trace),
+                            trace_sha256=hashlib.sha256(trace_path.read_bytes()).hexdigest(),
+                        )
             report.update({"status": "MISMATCH",
                            "finished_at": datetime.now(timezone.utc).isoformat(),
                            "failure": failure})

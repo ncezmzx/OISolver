@@ -19,6 +19,11 @@ REQUIRED_REFERENCES = {
     "differential-testing.md", "optimization.md", "explanation-editorial.md",
     "catalog-integration.md", "interoperability.md", "output-contract.md",
 }
+REQUIRED_RUNTIME = {
+    "catalog.py", "records.py", "process.py", "differential.py",
+    "domain_shrinkers.py", "evaluation.py", "experiment.py", "style.py",
+    "interop.py", "cli.py",
+}
 
 
 def markdown_links(path):
@@ -48,6 +53,10 @@ def check(catalog_path=None):
         # Interop is intentionally optional, but it must be linked from either entry or integration docs.
         if "interoperability.md" not in text:
             errors.append("Interop reference is unreachable from the Skill")
+    runtime_dir = ROOT / "src/oisolver"
+    missing_runtime = REQUIRED_RUNTIME - {path.name for path in runtime_dir.glob("*.py")}
+    if missing_runtime:
+        errors.append("Missing V2 runtime modules: " + ", ".join(sorted(missing_runtime)))
 
     for path in sorted(ROOT.rglob("*.md")):
         if any(part.startswith(".") for part in path.relative_to(ROOT).parts):
@@ -100,7 +109,8 @@ def check(catalog_path=None):
                     and metrics["forbidden_finding_hits"] == 0
                     and metrics["extra_finding_count"] == 0
                     and metrics["unsupported_conclusion_rate"] == 0
-                    and metrics["scope_violation_rate"] in (None, 0)):
+                    and metrics["scope_violation_rate"] in (None, 0)
+                    and metrics["proof_chain_support_rate"] in (None, 1.0)):
                 errors.append("Reference answers do not conform: " + cases)
         except Exception as exc:
             errors.append("Evaluation fixture failed for {}: {}".format(cases, exc))

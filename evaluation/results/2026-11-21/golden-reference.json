@@ -93,8 +93,12 @@
   "counts": {
     "correct_cases": 3,
     "correct_cases_called_refuted": 0,
+    "counterexample_suggestions": 2,
     "defects": 13,
     "defects_called_refuted": 13,
+    "proof_cases": 4,
+    "proof_chains_supported": 4,
+    "proof_probe_warnings": 0,
     "required_findings": 19,
     "required_findings_found": 19,
     "scope_violations": 0,
@@ -112,6 +116,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G01",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -125,6 +133,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G02",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -138,6 +150,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G03",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -151,6 +167,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G04",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -164,6 +184,23 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G05",
+      "proof_chain": {
+        "conclusion": "C",
+        "conclusion_status": "PROVED",
+        "conditional_premises": [],
+        "conditional_steps": [],
+        "counterexample_suggestions": [],
+        "edge_cases": 1,
+        "has_error": false,
+        "method": "generic",
+        "premises": 2,
+        "shape_valid": true,
+        "steps": 3,
+        "warnings": []
+      },
+      "proof_chain_error": "",
+      "proof_chain_required": true,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -177,6 +214,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G06",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -190,6 +231,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G07",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -203,6 +248,10 @@
       "findings_found": 2,
       "forbidden_hits": 0,
       "id": "G08",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 2,
       "scope_violation": false,
       "status_correct": true
@@ -216,6 +265,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G09",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -229,6 +282,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G10",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -242,6 +299,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G11",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -255,6 +316,23 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G12",
+      "proof_chain": {
+        "conclusion": "C",
+        "conclusion_status": "PROVED",
+        "conditional_premises": [],
+        "conditional_steps": [],
+        "counterexample_suggestions": [],
+        "edge_cases": 1,
+        "has_error": false,
+        "method": "generic",
+        "premises": 3,
+        "shape_valid": true,
+        "steps": 3,
+        "warnings": []
+      },
+      "proof_chain_error": "",
+      "proof_chain_required": true,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -268,6 +346,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G13",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -281,6 +363,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G14",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -294,6 +380,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G15",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -307,6 +397,10 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G16",
+      "proof_chain": null,
+      "proof_chain_error": "",
+      "proof_chain_required": false,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -320,6 +414,36 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G17",
+      "proof_chain": {
+        "conclusion": "C",
+        "conclusion_status": "CONDITIONAL",
+        "conditional_premises": [
+          "A2"
+        ],
+        "conditional_steps": [
+          "C"
+        ],
+        "counterexample_suggestions": [
+          {
+            "strategy": "Generate a boundary case that violates premise 'A2': Both operands are 32-bit int and their mathematical product exceeds INT_MAX.",
+            "trigger": "PREMISE_A2"
+          },
+          {
+            "strategy": "Negate one premise of reasoning step 'C' and preserve its dependencies to seek a counterexample.",
+            "trigger": "CONDITIONAL_STEP_C"
+          }
+        ],
+        "edge_cases": 2,
+        "has_error": false,
+        "method": "generic",
+        "premises": 2,
+        "shape_valid": true,
+        "steps": 3,
+        "warnings": []
+      },
+      "proof_chain_error": "",
+      "proof_chain_required": true,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -333,6 +457,23 @@
       "findings_found": 1,
       "forbidden_hits": 0,
       "id": "G18",
+      "proof_chain": {
+        "conclusion": "C",
+        "conclusion_status": "PROVED",
+        "conditional_premises": [],
+        "conditional_steps": [],
+        "counterexample_suggestions": [],
+        "edge_cases": 1,
+        "has_error": false,
+        "method": "generic",
+        "premises": 2,
+        "shape_valid": true,
+        "steps": 3,
+        "warnings": []
+      },
+      "proof_chain_error": "",
+      "proof_chain_required": true,
+      "proof_chain_supported": true,
       "required_findings": 1,
       "scope_violation": false,
       "status_correct": true
@@ -348,6 +489,7 @@
     "error_conclusion_recall": 1.0,
     "extra_finding_count": 0,
     "forbidden_finding_hits": 0,
+    "proof_chain_support_rate": 1.0,
     "required_finding_recall": 1.0,
     "scope_violation_rate": 0.0,
     "status_accuracy": 1.0,

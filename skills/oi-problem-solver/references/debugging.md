@@ -34,6 +34,10 @@
 
 重跑原反例、最小边界、相邻正常例及针对同类错误的数据；适合时再做固定种子对拍和 Sanitizer。分别记录理论结论与实际运行结果。
 
+## Candidate↔Interactor 交互题
+
+使用独立双进程而不是把脚本拼成一条 shell。保存有严格序号、方向、原始行与 query 标记的 JSONL chronology，并记录 seed、query/step 上限、双方退出码、stderr 和 transcript hash。每条消息依次通过 allowed/forbidden regex；报告第一个非法 query／answer、EOF、超时、信号退出或 step-limit breach 的 `message_index`。只有 transcript 覆盖到的有限交互可标 `TESTED_ONLY`，不能据此证明任意对手策略下正确。
+
 ## 反例缩小
 
 依次尝试减少 n/m、删除操作／边、减少不同值、缩小绝对值。每次候选都必须：

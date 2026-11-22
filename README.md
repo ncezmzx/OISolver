@@ -1,4 +1,4 @@
-# OISolver
+# OISolver V2
 
 **A rigorous OI / ICPC problem research, verification, debugging, and optimization Skill.**
 
@@ -27,7 +27,7 @@ Every material conclusion is one of `PROVED`, `REFUTED`, `CONDITIONAL`, `TESTED_
 Agent reasoning and deterministic tooling are intentionally separated:
 
 - the Skill understands, proves, refutes, explains, and decides modification scope;
-- the Python package delegates CPscore queries, validates evidence records, runs reproducible differential tests, guards counterexample shrinking with a legality validator, prepares blind bundles, and grades structured labels;
+- the Python package delegates CPscore queries, validates evidence records, runs reproducible generic and tree/graph/operation differential tests, guards every shrink proposal with legality plus mismatch checks, records interactive protocols and sanitizer/resource evidence, scores C++ patch preservation, prepares verifiable key-free bundles, and grades structured labels and proof chains;
 - OIBlogScore receives neutral evidence only and independently reviews a fixed article version.
 
 See [architecture](docs/architecture.md), [implementation plan](docs/implementation-plan.md), [dynamic workflows](docs/workflows.md), and the [pre-implementation research audit](docs/research-audit.md).
@@ -77,7 +77,24 @@ Commands are argv arrays (no shell). The generator receives `OISOLVER_SEED` and 
 oisolver difftest --config config.json
 ```
 
-The report records environment, commands, base and per-case seed, trial count, failure bytes, both outputs, and replay artifacts. Automatic line/token/integer shrinking runs only with a configured validator and rechecks legality plus mismatch at the end. The runner supplies timeouts, not an OS security sandbox. See the [protocol](skills/oi-problem-solver/references/differential-testing.md) and [security boundaries](docs/security-and-scope.md).
+The report records environment, commands, base and per-case seed, trial count, failure bytes, both outputs, replay artifacts, and a deterministic accept/reject shrink trace. Automatic generic or domain-aware shrinking runs only with a configured validator; every proposal must be legal and reproduce the mismatch. Built-in canonical adapters cover weighted trees, constrained graphs, and prerequisite-bearing operation sequences. See the [protocol](skills/oi-problem-solver/references/differential-testing.md) and [reproducible interactive/tree examples](docs/v2-reproducible-examples.md).
+
+## V2 execution, interactive, and C++ patch diagnostics
+
+```sh
+# ASan/UBSan plus optional Linux hard memory/stack limits
+oisolver diagnose-cpp --source solution.cpp --input failing.in \
+  --memory-mib 512 --stack-mib 64 --output diagnosis.json
+
+# Two-process Candidate ↔ Interactor transcript and first protocol failure
+oisolver interactive --config interactive.json
+
+# Token/structure/line/style preservation; authorized change is explicit
+oisolver style --before original.cpp --after fixed.cpp \
+  --expected-replacement upper_bound=lower_bound --output style.json
+```
+
+Sanitizer classes remain specific UB/OOB/overflow evidence. Native rlimits do not isolate filesystem or network; the optional bubblewrap backend fails closed when unavailable. Interactive output includes ordered traffic, seed, limits, first failure, and transcript hash. Style metrics warn about gratuitous renaming, macro/fast-I/O removal, global-array-to-vector rewrites, indentation churn, and unrelated changed lines; they do not prove semantic equivalence.
 
 ## Evidence records and OIBlogScore
 
@@ -104,7 +121,24 @@ PYTHONPATH=src python -m oisolver.cli eval prepare \
   --output /tmp/oisolver-blind
 ```
 
-Reference-answer conformance validates the grader, **not Agent ability**. A real blind evaluation must withhold keys in an isolated workspace and have independent mathematical review. See [evaluation methodology](docs/evaluation.md) and [executed results](docs/evaluation-results.md).
+Reference-answer conformance validates the grader, **not Agent ability**. V2 can create deterministic ZIP archives that omit keys, references, results, and tests, and prepares matched fixed-model Baseline-vs-Skill arms:
+
+```sh
+PYTHONPATH=src python -m oisolver.cli eval isolate \
+  --cases evaluation/cases/blind.json --instruction evaluation/instruction.txt \
+  --mode baseline --output /tmp/oisolver-baseline.zip
+PYTHONPATH=src python -m oisolver.cli eval verify-bundle /tmp/oisolver-baseline.zip
+
+PYTHONPATH=src python -m oisolver.cli eval experiment-prepare \
+  --cases evaluation/cases/blind.json --instruction evaluation/instruction.txt \
+  --skill-dir skills/oi-problem-solver --baseline-prompt /tmp/baseline.txt \
+  --output /tmp/oisolver-experiment
+PYTHONPATH=src python -m oisolver.cli eval compare \
+  --cases evaluation/cases/blind.json --key evaluation/keys/blind-key.json \
+  --baseline-answers /isolated/baseline.json --skill-answers /isolated/skill.json
+```
+
+A genuinely blind run must execute those archives where the controller checkout cannot be mounted, with the same model/build/settings and independent mathematical review. No real model comparison is claimed in this repository run. See [evaluation methodology](docs/evaluation.md) and [executed results](docs/evaluation-results.md).
 
 ## Repository structure
 
@@ -123,7 +157,8 @@ OISolver/
 
 ```sh
 PYTHONPATH=src python tools/check_quality.py
-PYTHONPATH=src python -m unittest discover -s tests -v
+CPSCORE_CATALOG=/path/to/CPscore/resources/algorithm-catalog \
+  PYTHONPATH=src python -m unittest discover -s tests -v
 python -m compileall -q src tools tests
 git diff --check
 ```

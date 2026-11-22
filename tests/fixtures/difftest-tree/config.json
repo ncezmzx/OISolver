@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "generator": {"argv": ["python3", "generator.py"]},
+  "candidate": {"argv": ["python3", "candidate.py"]},
+  "oracle": {"argv": ["python3", "oracle.py"]},
+  "trials": 1,
+  "seed": 424242,
+  "comparison": "tokens",
+  "timeout_seconds": 2,
+  "metadata": {"runtime": "Python fixture", "purpose": "tree domain shrinker regression"},
+  "output_dir": "output",
+  "shrink": {
+    "validator": {"argv": ["python3", "validator.py"]},
+    "domain": {
+      "kind": "tree",
+      "root": 1,
+      "node_weights": true,
+      "edge_weights": true
+    },
+    "units": [],
+    "max_attempts": 200
+  }
+}

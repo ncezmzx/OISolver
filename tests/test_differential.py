@@ -10,6 +10,7 @@ from oisolver.differential import run_config
 
 FIXTURE = Path(__file__).parent / "fixtures" / "difftest"
 LAZY_FIXTURE = Path(__file__).parent / "fixtures" / "difftest-lazy"
+TREE_FIXTURE = Path(__file__).parent / "fixtures" / "difftest-tree"
 
 
 class DifferentialTesting(unittest.TestCase):
@@ -97,6 +98,36 @@ class DifferentialTesting(unittest.TestCase):
         self.assertTrue(shrink["final_mismatch"])
         self.assertLess(shrink["minimized_bytes"], shrink["original_bytes"])
         self.assertTrue((artifact / "minimized-input.txt").is_file())
+
+    def test_tree_domain_shrinker_preserves_legality_and_full_trace(self):
+        root, config_path = self.workspace(TREE_FIXTURE)
+        code, report = run_config(config_path)
+        self.assertEqual(code, 1)
+        failure = report["failure"]
+        self.assertEqual(report["base_seed"], 424242)
+        self.assertEqual(failure["seed"], 9021162741047655247)
+        shrink = failure["shrink"]
+        self.assertEqual(shrink["domain"]["kind"], "tree")
+        self.assertEqual(shrink["domain"]["original"], {"vertices": 8, "edges": 7})
+        self.assertEqual(shrink["domain"]["minimized"], {"vertices": 1, "edges": 0})
+        self.assertTrue(shrink["final_legal"])
+        self.assertTrue(shrink["final_mismatch"])
+        self.assertEqual(shrink["trace_entries"], shrink["attempts"])
+        trace_path = Path(shrink["trace_file"])
+        trace = json.loads(trace_path.read_text(encoding="utf-8"))["attempts"]
+        self.assertTrue(any(row["transform"].startswith("tree:delete-leaf")
+                            and row["accepted"] for row in trace))
+        for row in trace:
+            if row["accepted"]:
+                self.assertEqual(row["validator_returncode"], 0)
+                self.assertEqual(row["outcome"], "mismatch")
+        _, second_config = self.workspace(TREE_FIXTURE)
+        second_code, second_report = run_config(second_config)
+        self.assertEqual(second_code, 1)
+        self.assertEqual(second_report["failure"]["input_sha256"],
+                         failure["input_sha256"])
+        self.assertEqual(second_report["failure"]["shrink"]["trace_sha256"],
+                         shrink["trace_sha256"])
 
 
 if __name__ == "__main__":

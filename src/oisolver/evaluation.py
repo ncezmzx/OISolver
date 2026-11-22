@@ -14,6 +14,16 @@ from typing import Any, Dict, Iterable, List, Optional, Set
 STATUSES = frozenset({"PROVED", "REFUTED", "CONDITIONAL", "TESTED_ONLY", "UNRESOLVED"})
 PROOF_TYPES = frozenset({"formal-proof", "invariant-proof", "counterexample",
                          "formal-disproof", "logical-gap", "exhaustive-full-domain"})
+PROOF_METHODS = frozenset({"generic", "equivalence", "greedy", "dp", "amortized", "randomized"})
+PROOF_ROLES = frozenset({
+    "premise-use", "necessity", "sufficiency", "exchange", "cut",
+    "stays-ahead", "base", "transition", "extraction", "potential",
+    "charging", "probability-space", "invariant", "conclusion",
+})
+PREMISE_KINDS = frozenset({
+    "explicit", "source-confirmed", "inference", "assumption", "unknown"
+})
+EDGE_DISPOSITIONS = frozenset({"covered", "excluded-by-premise", "unresolved"})
 
 
 class EvaluationError(ValueError):
@@ -56,6 +66,199 @@ def _rows(value: Any, key: str, label: str) -> List[Dict[str, Any]]:
             raise EvaluationError("{} has an invalid or duplicate case ID".format(label))
         seen.add(case_id)
     return rows
+
+
+def inspect_proof_chain(chain: Any) -> Dict[str, Any]:
+    """Validate a semi-formal proof DAG and run common OI logic probes.
+
+    This checks explicit dependencies and known proof obligations.  It does not
+    establish that a free-form statement or justification is mathematically true.
+    """
+    if not isinstance(chain, dict):
+        raise EvaluationError("proof_chain must be an object")
+    method = chain.get("method")
+    if method not in PROOF_METHODS:
+        raise EvaluationError("proof_chain.method is invalid")
+    premises = chain.get("premises")
+    edge_cases = chain.get("edge_cases")
+    steps = chain.get("steps")
+    if not isinstance(premises, list) or not premises:
+        raise EvaluationError("proof_chain.premises must be a nonempty object array")
+    if not isinstance(edge_cases, list):
+        raise EvaluationError("proof_chain.edge_cases must be an object array")
+    if not isinstance(steps, list) or not steps:
+        raise EvaluationError("proof_chain.steps must be a nonempty object array")
+
+    premise_by_id: Dict[str, Dict[str, Any]] = {}
+    for premise in premises:
+        if not isinstance(premise, dict):
+            raise EvaluationError("proof_chain premise must be an object")
+        premise_id = premise.get("id")
+        statement = premise.get("statement")
+        kind = premise.get("kind")
+        if (not isinstance(premise_id, str) or not premise_id
+                or premise_id in premise_by_id):
+            raise EvaluationError("proof_chain has an invalid or duplicate premise ID")
+        if not isinstance(statement, str) or not statement.strip():
+            raise EvaluationError("proof_chain premise statement is empty")
+        if kind not in PREMISE_KINDS:
+            raise EvaluationError("proof_chain premise kind is invalid")
+        premise_by_id[premise_id] = premise
+
+    edge_by_id: Dict[str, Dict[str, Any]] = {}
+    for edge in edge_cases:
+        if not isinstance(edge, dict):
+            raise EvaluationError("proof_chain edge case must be an object")
+        edge_id = edge.get("id")
+        statement = edge.get("statement")
+        disposition = edge.get("disposition")
+        if not isinstance(edge_id, str) or not edge_id or edge_id in edge_by_id:
+            raise EvaluationError("proof_chain has an invalid or duplicate edge-case ID")
+        if not isinstance(statement, str) or not statement.strip():
+            raise EvaluationError("proof_chain edge-case statement is empty")
+        if disposition not in EDGE_DISPOSITIONS:
+            raise EvaluationError("proof_chain edge-case disposition is invalid")
+        edge_by_id[edge_id] = edge
+
+    step_by_id: Dict[str, Dict[str, Any]] = {}
+    ordered_ids: List[str] = []
+    for step in steps:
+        if not isinstance(step, dict):
+            raise EvaluationError("proof_chain step must be an object")
+        step_id = step.get("id")
+        if not isinstance(step_id, str) or not step_id or step_id in step_by_id:
+            raise EvaluationError("proof_chain has an invalid or duplicate step ID")
+        if not isinstance(step.get("statement"), str) or not step["statement"].strip():
+            raise EvaluationError("proof_chain step statement is empty")
+        if step.get("status") not in STATUSES:
+            raise EvaluationError("proof_chain step status is invalid")
+        if step.get("role") not in PROOF_ROLES:
+            raise EvaluationError("proof_chain step role is invalid")
+        if not isinstance(step.get("justification"), str) or not step["justification"].strip():
+            raise EvaluationError("proof_chain step justification is empty")
+        premise_refs = step.get("premises")
+        edge_refs = step.get("edge_cases")
+        dependencies = step.get("depends_on")
+        for label, refs in (("premises", premise_refs), ("edge_cases", edge_refs),
+                            ("depends_on", dependencies)):
+            if not isinstance(refs, list) or any(not isinstance(item, str) for item in refs):
+                raise EvaluationError("proof_chain step.{} must be a string array".format(label))
+            if len(refs) != len(set(refs)):
+                raise EvaluationError("proof_chain step repeats a {} reference".format(label))
+        if any(item not in premise_by_id for item in premise_refs):
+            raise EvaluationError("proof_chain step cites an unknown premise")
+        if any(item not in edge_by_id for item in edge_refs):
+            raise EvaluationError("proof_chain step cites an unknown edge case")
+        if any(item not in step_by_id for item in dependencies):
+            raise EvaluationError("proof_chain dependency must refer to an earlier step")
+        step_by_id[step_id] = step
+        ordered_ids.append(step_id)
+
+    conclusion = chain.get("conclusion")
+    if conclusion not in step_by_id:
+        raise EvaluationError("proof_chain.conclusion must name a step")
+    if conclusion != ordered_ids[-1] or step_by_id[conclusion]["role"] != "conclusion":
+        raise EvaluationError("proof_chain.conclusion must be the final conclusion-role step")
+    ancestors = set()
+    pending = list(step_by_id[conclusion]["depends_on"])
+    while pending:
+        dependency = pending.pop()
+        if dependency in ancestors:
+            continue
+        ancestors.add(dependency)
+        pending.extend(step_by_id[dependency]["depends_on"])
+    unused_steps = set(ordered_ids[:-1]) - ancestors
+    if unused_steps:
+        raise EvaluationError(
+            "proof_chain has steps disconnected from its conclusion: {}".format(
+                ", ".join(sorted(unused_steps))
+            )
+        )
+    cited_premises = {item for step in steps for item in step["premises"]}
+    cited_edges = {item for step in steps for item in step["edge_cases"]}
+    if set(premise_by_id) - cited_premises:
+        raise EvaluationError("proof_chain declares an unused premise")
+    if set(edge_by_id) - cited_edges:
+        raise EvaluationError("proof_chain declares an unused edge case")
+
+    warnings: List[Dict[str, str]] = []
+    suggestions: List[Dict[str, str]] = []
+    roles = {step["role"] for step in steps}
+
+    def warn(code: str, message: str, severity: str = "error") -> None:
+        warnings.append({"code": code, "message": message, "severity": severity})
+        suggestions.append({
+            "trigger": code,
+            "strategy": "Construct the smallest legal input violating the missing obligation while preserving all earlier explicit premises.",
+        })
+
+    if method == "equivalence":
+        if "necessity" not in roles:
+            warn("MISSING_NECESSITY", "An equivalence proof has no necessity direction.")
+        if "sufficiency" not in roles:
+            warn("MISSING_SUFFICIENCY", "An equivalence proof has no sufficiency direction.")
+    elif method == "greedy" and not roles.intersection({"exchange", "cut", "stays-ahead"}):
+        warn("MISSING_GREEDY_GLOBAL_ARGUMENT",
+             "A greedy proof needs an exchange, cut, or stays-ahead argument.")
+    elif method == "dp":
+        for required, code in (("base", "MISSING_DP_BASE"),
+                               ("transition", "MISSING_DP_TRANSITION"),
+                               ("extraction", "MISSING_DP_EXTRACTION")):
+            if required not in roles:
+                warn(code, "A DP proof is missing its {} obligation.".format(required))
+        if not edge_cases:
+            warn("MISSING_DP_DEGENERATE_CASE",
+                 "A DP proof declares no empty/minimum/degenerate edge case.")
+    elif method == "amortized" and not roles.intersection({"potential", "charging"}):
+        warn("MISSING_AMORTIZATION_ACCOUNT",
+             "An amortized bound needs an explicit potential or charging account.")
+    elif method == "randomized" and "probability-space" not in roles:
+        warn("MISSING_PROBABILITY_SPACE",
+             "A randomized proof must define its probability space and guarantee type.")
+
+    for premise in premises:
+        if premise["kind"] in ("assumption", "unknown"):
+            suggestions.append({
+                "trigger": "PREMISE_{}".format(premise["id"]),
+                "strategy": "Generate a boundary case that violates premise '{}': {}".format(
+                    premise["id"], premise["statement"]
+                ),
+            })
+    for step in steps:
+        if step["status"] == "CONDITIONAL":
+            suggestions.append({
+                "trigger": "CONDITIONAL_STEP_{}".format(step["id"]),
+                "strategy": "Negate one premise of reasoning step '{}' and preserve its dependencies to seek a counterexample.".format(step["id"]),
+            })
+        if step["status"] in ("REFUTED", "UNRESOLVED", "TESTED_ONLY"):
+            warnings.append({
+                "code": "UNCLOSED_STEP_{}".format(step["id"]),
+                "message": "Proof chain contains a non-closed step with status {}.".format(
+                    step["status"]
+                ),
+                "severity": "error",
+            })
+    for edge in edge_cases:
+        if edge["disposition"] == "unresolved":
+            warn("UNRESOLVED_EDGE_{}".format(edge["id"]),
+                 "An edge case remains unresolved: {}".format(edge["statement"]))
+
+    return {
+        "shape_valid": True,
+        "method": method,
+        "premises": len(premises),
+        "edge_cases": len(edge_cases),
+        "steps": len(steps),
+        "conclusion": conclusion,
+        "conclusion_status": step_by_id[conclusion]["status"],
+        "conditional_steps": [step["id"] for step in steps
+                              if step["status"] == "CONDITIONAL"],
+        "conditional_premises": [premise["id"] for premise in premises
+                                 if premise["kind"] in ("assumption", "unknown")],
+        "warnings": warnings,
+        "counterexample_suggestions": suggestions,
+        "has_error": any(item["severity"] == "error" for item in warnings),
+    }
 
 
 def prepare_blind(cases_path: Path, instruction_path: Path, output: Path) -> Dict[str, Any]:
@@ -120,6 +323,10 @@ def grade(cases_path: Path, key_path: Path, answers_path: Path) -> Dict[str, Any
     unsupported = 0
     scope_violations = 0
     scoped_cases = 0
+    proof_cases = 0
+    proof_chains_supported = 0
+    proof_probe_warnings = 0
+    counterexample_suggestions = 0
     by_category: Dict[str, Dict[str, int]] = {}
     details = []
 
@@ -157,6 +364,27 @@ def grade(cases_path: Path, key_path: Path, answers_path: Path) -> Dict[str, Any
                                                   for item in conditions):
             raise EvaluationError("{}.conditions must be a string array".format(case_id))
 
+        proof_required = status in ("PROVED", "CONDITIONAL")
+        proof_analysis: Optional[Dict[str, Any]] = None
+        proof_error = ""
+        if proof_required:
+            proof_cases += 1
+        if answer.get("proof_chain") is not None:
+            try:
+                proof_analysis = inspect_proof_chain(answer["proof_chain"])
+            except EvaluationError as exc:
+                proof_error = str(exc)
+                proof_analysis = {
+                    "shape_valid": False,
+                    "warnings": [{"code": "MALFORMED_PROOF_CHAIN",
+                                  "message": proof_error, "severity": "error"}],
+                    "counterexample_suggestions": [],
+                    "has_error": True,
+                }
+        if proof_analysis is not None:
+            proof_probe_warnings += len(proof_analysis["warnings"])
+            counterexample_suggestions += len(proof_analysis["counterexample_suggestions"])
+
         supported = True
         if status == "PROVED" and not evidence_types.intersection(
                 {"formal-proof", "invariant-proof", "exhaustive-full-domain"}):
@@ -172,6 +400,22 @@ def grade(cases_path: Path, key_path: Path, answers_path: Path) -> Dict[str, Any
             supported = False
         if "logical-gap" in evidence_types and claim_scope != "reasoning-step":
             supported = False
+        proof_supported = not proof_required
+        if proof_required:
+            proof_supported = bool(
+                proof_analysis is not None
+                and proof_analysis.get("shape_valid")
+                and not proof_analysis.get("has_error")
+                and proof_analysis.get("conclusion_status") == status
+                and not (status == "PROVED" and (
+                    proof_analysis.get("conditional_steps")
+                    or proof_analysis.get("conditional_premises")
+                ))
+            )
+            if proof_supported:
+                proof_chains_supported += 1
+            else:
+                supported = False
         unsupported += not supported
 
         is_status_correct = status == expected_status
@@ -247,6 +491,10 @@ def grade(cases_path: Path, key_path: Path, answers_path: Path) -> Dict[str, Any
             "forbidden_hits": forbidden_here,
             "extra_findings": extra_here,
             "evidence_shape_supported": supported,
+            "proof_chain_required": proof_required,
+            "proof_chain_supported": proof_supported,
+            "proof_chain": proof_analysis,
+            "proof_chain_error": proof_error,
             "scope_violation": scope_error,
         })
 
@@ -267,6 +515,7 @@ def grade(cases_path: Path, key_path: Path, answers_path: Path) -> Dict[str, Any
             "extra_finding_count": extra_findings,
             "unsupported_conclusion_rate": _ratio(unsupported, total),
             "scope_violation_rate": _ratio(scope_violations, scoped_cases),
+            "proof_chain_support_rate": _ratio(proof_chains_supported, proof_cases),
         },
         "counts": {
             "status_correct": status_correct,
@@ -279,6 +528,10 @@ def grade(cases_path: Path, key_path: Path, answers_path: Path) -> Dict[str, Any
             "unsupported_conclusions": unsupported,
             "scoped_cases": scoped_cases,
             "scope_violations": scope_violations,
+            "proof_cases": proof_cases,
+            "proof_chains_supported": proof_chains_supported,
+            "proof_probe_warnings": proof_probe_warnings,
+            "counterexample_suggestions": counterexample_suggestions,
         },
         "by_category": dict(sorted(by_category.items())),
         "details": details,

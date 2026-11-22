@@ -32,6 +32,7 @@ class EvaluationHarness(unittest.TestCase):
                 self.assertEqual(result["metrics"]["extra_finding_count"], 0)
                 self.assertEqual(result["metrics"]["unsupported_conclusion_rate"], 0)
                 self.assertIn(result["metrics"]["scope_violation_rate"], (0, None))
+                self.assertEqual(result["metrics"]["proof_chain_support_rate"], 1.0)
 
     def test_logical_gap_only_supports_a_scoped_reasoning_step(self):
         with tempfile.TemporaryDirectory() as temporary:

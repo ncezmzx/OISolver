@@ -11,6 +11,19 @@
 
 证明算法不等于证明代码。补作的证明应标为“审查者补证”，不能说原说明已经给出。
 
+## 半形式化推导链
+
+关键 `PROVED`／`CONDITIONAL` 结论必须拆为 `proof_chain`：
+
+- `premises`：逐项给 id、statement 与 `explicit/source-confirmed/inference/assumption/unknown` 来源等级；
+- `edge_cases`：逐项给 id、最小／空／重复／退化情形及 `covered/excluded-by-premise/unresolved` 处理；
+- `steps`：按顺序给原子 statement、五态 status、role、justification、premise／edge-case 引用和只指向前序步骤的 `depends_on`；
+- `conclusion`：必须指向链内最后关闭的结论步骤。`PROVED` 链不能依赖 `CONDITIONAL/TESTED_ONLY/UNRESOLVED/REFUTED` 步骤。
+
+机械探针至少检查：等价命题是否同时有 necessity/sufficiency；贪心是否有 exchange/cut/stays-ahead；DP 是否有 base/transition/extraction 与退化边界；均摊是否有 potential/charging；随机化是否定义 probability-space。探针命中只说明证明义务未关闭，不自动说明最终命题为假。
+
+`assumption/unknown` 前提或 `CONDITIONAL` 推理步骤会生成定向反例建议：保持已关闭的早期前提，否定一个缺失前提，并搜索最小合法输入。建议本身是待执行计划，不是已找到反例。
+
 ## 复杂度账本
 
 固定规模变量、字长模型、多测总和和实际实现。逐阶段登记：预处理、排序、递归、每次更新／查询、重建／清空、输出；最后求和。区分最坏、均摊、期望和实测。
