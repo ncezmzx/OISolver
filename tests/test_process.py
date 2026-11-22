@@ -58,7 +58,8 @@ class ProcessBackends(unittest.TestCase):
         self.assertTrue(report["degraded"])
         self.assertNotIn("run", report)
 
-    @unittest.skipUnless(shutil.which("g++"), "g++ capability probe requires g++")
+    @unittest.skipUnless(os.name == "posix" and shutil.which("g++"),
+                         "POSIX g++ capability probe requires g++")
     def test_gxx_capability_executes_asan_ubsan_probe(self):
         probe = probe_cpp_compiler("g++")
         self.assertEqual(probe["status"], "AVAILABLE")
