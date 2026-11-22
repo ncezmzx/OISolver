@@ -47,7 +47,7 @@ python3 -m pip wheel --no-deps --no-build-isolation \
 python3 -m pip install --no-index --no-deps \
   --target /tmp/oisolver-v3-install /tmp/oisolver-v3-wheel/oisolver-3.0.0-py3-none-any.whl
 # PASS; installed version 3.0.0, adapter/workflow imports and CLI parser smoke;
-# wheel SHA-256 b4ccbc4c2c2d8830d27a084ce5e5dd821250c0ed9f93f48ddd777bf39b8e32aa
+# wheel SHA-256 377a28cc59182f2909ecdf22a87caabac00247ce6835742cc771b9e795e7d2f8
 ```
 
 V3 focused executions:

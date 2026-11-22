@@ -390,8 +390,7 @@ def probe_cpp_compiler(compiler: str, standard: str = "c++17",
         source = root / "probe.cpp"
         binary = root / ("probe.exe" if os.name == "nt" else "probe")
         source.write_text(
-            "#include <climits>\n"
-            "int main(int argc,char**){ volatile int x=INT_MAX; "
+            "int main(int argc,char**){ volatile int x=2147483647; "
             "if(argc>1){ int y=x+1; return y==0; } return 0; }\n",
             encoding="utf-8",
         )

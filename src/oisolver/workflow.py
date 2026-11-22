@@ -192,14 +192,17 @@ def _validate_config(config: Dict[str, Any], config_path: Path) -> Dict[str, Any
 
     compiler = config.get("compiler", {})
     if not isinstance(compiler, dict) or set(compiler) - {
-            "name", "standard", "release_flags", "timeout_seconds"}:
+            "name", "standard", "release_flags", "timeout_seconds",
+            "verify_clang_ast"}:
         raise WorkflowError("compiler has unknown fields")
     name = compiler.get("name", "auto")
     standard = compiler.get("standard", "c++17")
     flags = compiler.get("release_flags", ["-O2", "-Wall", "-Wextra"])
     timeout = compiler.get("timeout_seconds", 5.0)
+    verify_clang_ast = compiler.get("verify_clang_ast", False)
     if (not isinstance(name, str) or not name or not isinstance(standard, str)
-            or not standard or not isinstance(timeout, (int, float))
+            or not standard or type(verify_clang_ast) is not bool
+            or not isinstance(timeout, (int, float))
             or isinstance(timeout, bool) or timeout <= 0
             or not isinstance(flags, list)
             or any(not isinstance(flag, str) or not flag for flag in flags)):
@@ -231,7 +234,8 @@ def _validate_config(config: Dict[str, Any], config_path: Path) -> Dict[str, Any
         "events": normalized_events,
         "compiler": {"name": name, "standard": standard,
                      "release_flags": list(flags),
-                     "timeout_seconds": float(timeout)},
+                     "timeout_seconds": float(timeout),
+                     "verify_clang_ast": verify_clang_ast},
         "replacements": [tuple(item) for item in replacements],
         "threshold": float(threshold),
         "output": output,
@@ -300,6 +304,7 @@ def prepare_repair_workflow(statement: Path, source: Path,
             "name": "auto", "standard": "c++17",
             "release_flags": ["-O2", "-Wall", "-Wextra"],
             "timeout_seconds": 5.0,
+            "verify_clang_ast": False,
         },
         "differential_config": "difftest.json",
         "expected_replacements": [],
@@ -497,7 +502,8 @@ def run_repair_workflow(config_path: Path) -> Tuple[int, Dict[str, Any]]:
         "report": regression,
     }
 
-    clang = compiler if "clang" in Path(compiler).name.lower() else None
+    clang = (compiler if compiler_config["verify_clang_ast"]
+             and "clang" in Path(compiler).name.lower() else None)
     try:
         style = evaluate_cpp_files(
             files["original_source"], files["patched_source"],

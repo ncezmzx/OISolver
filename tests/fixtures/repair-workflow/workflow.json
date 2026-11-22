@@ -28,7 +28,7 @@
     {"stage": "regression", "evidence": "Rerun the diagnostic, sanitizer build, and the same fixed-seed differential range."}
   ],
   "compiler": {
-    "name": "auto",
+    "name": "g++",
     "standard": "c++17",
     "release_flags": ["-O2", "-Wall", "-Wextra", "-pedantic"],
     "timeout_seconds": 5

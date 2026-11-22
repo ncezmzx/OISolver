@@ -11,7 +11,7 @@ V3 preserves the V2 evidence below and adds declarative input adaptation, style 
 - style calibration: 12 samples (9 acceptable, 3 reject); threshold 0.10 has 0 false positives and 0 false negatives, while 0.05 rejects one acceptable sample and 0.15 accepts one unacceptable sample;
 - compiler report: `DEGRADED` solely because `clang++` is absent; g++ 12.2.0 C++17, ASan+UBSan compile, clean runtime, and intentional signed-overflow detection/classification probes pass;
 - repair fixture: ordered eight-stage evidence accepted, original diagnostic discrepancy reproduced, guarded discovery/shrink succeeds, patched run matches the correct answer, all configured regression trials agree, patched sanitizer passes, and style score is 99.462. Its algorithm-wide claim remains `UNRESOLVED` absent a separate proof;
-- wheel/install smoke: `oisolver-3.0.0-py3-none-any.whl` installed with `--no-index --no-deps`, exposed adapter/workflow/CLI entry points, and had SHA-256 `b4ccbc4c2c2d8830d27a084ce5e5dd821250c0ed9f93f48ddd777bf39b8e32aa`.
+- wheel/install smoke: `oisolver-3.0.0-py3-none-any.whl` installed with `--no-index --no-deps`, exposed adapter/workflow/CLI entry points, and had SHA-256 `377a28cc59182f2909ecdf22a87caabac00247ce6835742cc771b9e795e7d2f8`.
 
 Exact commands, schemas, and bounded claims are in [V3 reproducible examples](v3-reproducible-examples.md). The live 12-case fixed-model experiment was not run because no model entry point exists; its null metrics and infrastructure attribution are recorded in `evaluation/results/2026-11-21/v3-live-model-experiment-status.json`.
 
